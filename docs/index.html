@@ -402,7 +402,7 @@
         }
         .vocab-row {
             display: grid;
-            grid-template-columns: 28px auto 1fr auto;
+            grid-template-columns: 28px auto 1fr auto 40px;
             align-items: center;
             gap: 8px;
             padding: 10px 12px;
@@ -419,6 +419,23 @@
         .vocab-word { font-size: 18px; font-weight: 700; color: var(--text); }
         .vocab-reading { font-size: 12px; color: var(--text-light); }
         .vocab-meaning { font-size: 13px; color: var(--primary-dark); font-weight: 500; white-space: nowrap; }
+        .vocab-mic {
+            width: 36px; height: 36px; border-radius: 50%;
+            border: none; background: var(--danger); color: white;
+            font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s ease;
+        }
+        .vocab-mic:active { transform: scale(0.92); }
+        .drill-card-wrap { position: relative; }
+        .drill-card-mic {
+            position: absolute; top: 8px; right: 8px;
+            width: 32px; height: 32px; border-radius: 50%;
+            border: none; background: var(--danger); color: white;
+            font-size: 14px; cursor: pointer; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .drill-card-mic:active { transform: scale(0.92); }
 
         .rule-card {
             background: white;
@@ -2083,18 +2100,21 @@
         });
         html += '</div>';
 
-        html += '<div class="section-header" style="margin-top:20px;">バッチム付き初級単語 30<span class="small">タップで発音</span></div>';
+        html += '<div class="section-header" style="margin-top:20px;">バッチム付き初級単語 30<span class="small">🔊 再生 / 🎙️ 発音評価</span></div>';
         BATCHIM_VOCAB.forEach(function(group) {
             html += '<div class="vocab-set">';
             html += '<div class="vocab-set-title">' + escapeHtml(group.title) + '</div>';
             html += '<div class="vocab-list">';
             group.items.forEach(function(it) {
-                html += '<button class="vocab-row tts-play" data-text="' + escapeHtml(it.w) + '">';
+                var safeW = escapeHtml(it.w);
+                var safeLabel = escapeHtml(it.m);
+                html += '<div class="vocab-row tts-play" data-text="' + safeW + '" role="button" tabindex="0">';
                 html += '<span class="vocab-icon">🔊</span>';
-                html += '<span class="vocab-word">' + escapeHtml(it.w) + '</span>';
+                html += '<span class="vocab-word">' + safeW + '</span>';
                 html += '<span class="vocab-reading">' + escapeHtml(it.r) + '</span>';
-                html += '<span class="vocab-meaning">' + escapeHtml(it.m) + '</span>';
-                html += '</button>';
+                html += '<span class="vocab-meaning">' + safeLabel + '</span>';
+                html += '<button class="vocab-mic open-practice" data-text="' + safeW + '" data-label="' + safeLabel + '" aria-label="発音練習">🎙️</button>';
+                html += '</div>';
             });
             html += '</div>';
             html += '</div>';
@@ -2288,12 +2308,17 @@
             html += '<button data-drill-mode="cv" class="' + (mode==='cv'?'active':'') + '">子音+母音</button>';
             html += '<button data-drill-mode="cvc" class="' + (mode==='cvc'?'active':'') + '">+バッチム</button>';
             html += '</div>';
-            html += '<div class="info-box" style="background:var(--primary-lighter);border-left-color:var(--primary);"><strong>🎯 単語ドリル:</strong> 🔊 を押して発音を聞き、真似して声に出してみよう。「やり直し」で別の10語に切り替わります。</div>';
+            html += '<div class="info-box" style="background:var(--primary-lighter);border-left-color:var(--primary);"><strong>🎯 単語ドリル:</strong> カードで🔊を再生。🎙️で発音を評価します。「やり直し」で別の10語に切り替わります。</div>';
             html += '<div class="drill-grid">';
             DRILL_WORDS.forEach(function(item) {
-                html += '<div class="drill-card tts-play" data-text="' + escapeHtml(item.w) + '">';
+                var safeW = escapeHtml(item.w);
+                var safeM = escapeHtml(item.m);
+                html += '<div class="drill-card-wrap">';
+                html += '<div class="drill-card tts-play" data-text="' + safeW + '">';
                 html += '<div class="word">' + item.w + '</div>';
-                html += '<div class="meaning">' + escapeHtml(item.m) + '</div>';
+                html += '<div class="meaning">' + safeM + '</div>';
+                html += '</div>';
+                html += '<button class="drill-card-mic open-practice" data-text="' + safeW + '" data-label="' + safeM + '" aria-label="発音練習">🎙️</button>';
                 html += '</div>';
             });
             html += '</div>';
@@ -2465,18 +2490,21 @@
             return;
         }
 
+        // 🎙️ buttons can live inside tts-play cards, so match them first
+        var practiceBtn = e.target.closest('.open-practice');
+        if (practiceBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            openPracticeModal(practiceBtn.dataset.text, practiceBtn.dataset.label);
+            return;
+        }
+
         var tts = e.target.closest('.tts-play');
         if (tts) {
             e.preventDefault();
             e.stopPropagation();
             var speed = tts.dataset.speed ? parseFloat(tts.dataset.speed) : undefined;
             speakText(tts.dataset.text, tts, speed);
-            return;
-        }
-
-        var practiceBtn = e.target.closest('.open-practice');
-        if (practiceBtn) {
-            openPracticeModal(practiceBtn.dataset.text, practiceBtn.dataset.label);
             return;
         }
 
