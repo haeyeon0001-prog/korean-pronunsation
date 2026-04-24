@@ -232,16 +232,36 @@
             margin-bottom: 16px;
         }
         .letter-cell {
+            position: relative;
             background: white;
             border-radius: 12px;
-            padding: 10px 6px;
+            padding: 10px 6px 22px 6px;
             text-align: center;
             border: 0.5px solid var(--border);
             box-shadow: var(--shadow-sm);
             cursor: pointer;
             transition: transform 0.15s ease, background 0.15s ease;
         }
-        .letter-cell:active { transform: scale(0.94); }
+        .letter-cell:active { transform: scale(0.94); background: var(--primary-lighter); }
+        .letter-mic {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 22px;
+            height: 22px;
+            padding: 0;
+            font-size: 12px;
+            border: none;
+            border-radius: 50%;
+            background: var(--success, #27ae60);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .letter-mic:active { transform: scale(0.88); }
         .letter-cell.doubled { background: var(--primary-lighter); }
         .letter-cell .hangul {
             font-size: 30px;
@@ -1493,7 +1513,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'macos-jian-premium-2026-04-24';
+    var AUDIO_VERSION = 'jian-v2-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1728,10 +1748,9 @@
                 }
                 var playBtn = document.querySelector('.play-recorded-btn');
                 if (playBtn) playBtn.disabled = false;
-                var evalBtn = document.getElementById('evalBtn');
-                if (evalBtn) evalBtn.disabled = false;
                 var resultEl = document.getElementById('evalResult');
-                if (resultEl) resultEl.innerHTML = '';
+                if (resultEl) resultEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-light);font-size:13px;">評価中…</div>';
+                setTimeout(function() { evaluatePronunciation(); }, 200);
             };
             mediaRecorder.start();
             if (btnEl) btnEl.classList.add('recording');
@@ -1987,23 +2006,23 @@
         if (detail.sample && detail.sample !== ttsMain) {
             html += '<button class="btn btn-info tts-play" data-text="' + escapeHtml(ttsSample) + '">🔊 例単語</button>';
         }
-        html += '<button class="btn btn-outline tts-play" data-text="' + escapeHtml(ttsMain) + '" data-speed="0.6">🐢 ゆっくり</button>';
         html += '<button class="btn btn-success open-practice" data-text="' + escapeHtml(ttsMain) + '" data-label="' + escapeHtml(detail.h + ' - ' + detail.jp) + '">🎙️ 発音練習</button>';
         html += '</div>';
         html += '</div>';
 
-        html += '<div class="section-header">' + (mode === 'consonants' ? '子音一覧' : '母音一覧') + '<span class="small">タップで詳細</span></div>';
+        html += '<div class="section-header">' + (mode === 'consonants' ? '子音一覧' : '母音一覧') + '<span class="small">タップで発音 / 🎙️で練習</span></div>';
 
-        var key = detail ? detail.name : '';
-        detail && detail.name;
         html += '<div class="letter-grid">';
         list.forEach(function(item) {
             var cls = 'letter-cell';
             if (item.type === 'tense' || item.type === 'aspirated') cls += ' doubled';
-            html += '<div class="' + cls + '" data-letter="' + item.h + '">';
+            var ttsName = item.name || item.sample || item.h;
+            var label = item.h + ' - ' + item.jp;
+            html += '<div class="' + cls + '" data-letter="' + item.h + '" data-tts="' + escapeHtml(ttsName) + '">';
             html += '<div class="hangul">' + item.h + '</div>';
             html += '<div class="romaji">' + item.r + '</div>';
             html += '<div class="jp">' + escapeHtml(item.jp.split('/')[0]) + '</div>';
+            html += '<button class="letter-mic open-practice" data-text="' + escapeHtml(ttsName) + '" data-label="' + escapeHtml(label) + '" aria-label="発音練習">🎙️</button>';
             html += '</div>';
         });
         html += '</div>';
@@ -2391,21 +2410,15 @@
                 '<div style="font-size:42px;font-weight:700;color:var(--primary-dark);margin-bottom:4px;">' + safeText + '</div>' +
                 '<div style="font-size:13px;color:var(--text-light);">' + safeLabel + '</div>' +
             '</div>' +
-            '<div class="audio-controls">' +
-                '<button class="btn btn-primary tts-play" data-text="' + safeText + '">🔊 手本 (通常)</button>' +
-                '<button class="btn btn-outline tts-play" data-text="' + safeText + '" data-speed="0.6">🐢 ゆっくり</button>' +
-            '</div>' +
             '<div class="record-panel">' +
-                '<div class="title">🎙️ あなたの発音を録音</div>' +
                 '<div class="record-center">' +
                     '<button class="record-btn" id="recordBtn">🎙️</button>' +
-                    '<div class="record-status" id="recordStatus">ボタンをタップして開始</div>' +
+                    '<div class="record-status" id="recordStatus">録音ボタンをタップして話す</div>' +
                 '</div>' +
                 '<div class="record-compare">' +
-                    '<button class="btn btn-info tts-play" data-text="' + safeText + '">🔊 手本</button>' +
-                    '<button class="btn btn-success play-recorded-btn" id="playRecordedBtn" disabled>▶ 録音再生</button>' +
+                    '<button class="btn btn-info tts-play" data-text="' + safeText + '">🔊 お手本</button>' +
+                    '<button class="btn btn-success play-recorded-btn" id="playRecordedBtn" disabled>▶ 自分の声</button>' +
                 '</div>' +
-                '<button class="btn btn-primary" id="evalBtn" style="width:100%;margin-top:10px;">🎤 発音を評価 (タップして話す)</button>' +
                 '<div id="evalResult"></div>' +
             '</div>';
 
@@ -2464,15 +2477,18 @@
             return;
         }
 
+        var micBtn = e.target.closest('.letter-mic');
+        if (micBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            openPracticeModal(micBtn.dataset.text, micBtn.dataset.label);
+            return;
+        }
+
         var cell = e.target.closest('.letter-cell');
         if (cell) {
-            APP_STATE.selectedLetter = cell.dataset.letter;
-            saveState();
-            renderLetters();
-            document.getElementById('mainContainer').scrollTop = 0;
-            var list = (APP_STATE.subtab0 === 'consonants') ? CONSONANTS : VOWELS;
-            var found = list.find(function(x) { return x.h === cell.dataset.letter; });
-            if (found) setTimeout(function() { speakText(found.name || found.sample || found.h); }, 150);
+            var tts = cell.dataset.tts;
+            if (tts) speakText(tts, cell);
             return;
         }
 
