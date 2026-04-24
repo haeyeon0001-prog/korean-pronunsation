@@ -1583,7 +1583,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'jian-v6-2026-04-25';
+    var AUDIO_VERSION = 'jian-v7-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1652,15 +1652,14 @@
             };
         }
 
-        // ① OpenAI TTS (APIキーが設定されていれば最優先 — 最も自然な発音)
-        var apiKey = (APP_STATE.openaiApiKey || '').trim();
-
-        // ② APIキー無しなら事前録音MP3 (Google TTS)
+        // ① 事前録音された音声 (最優先 — 即時再生・オフライン可)
         var fname = AUDIO_MANIFEST[text];
-        if (!apiKey && fname) {
+        if (fname) {
             if (playPrerecorded(fname, btn, speedOverride, resetBtn)) return;
         }
 
+        // ② APIキーがあれば OpenAI TTS (未登録テキスト用のフォールバック)
+        var apiKey = (APP_STATE.openaiApiKey || '').trim();
         if (apiKey) {
             var myId = ++ttsRequestId;
             var abortCtrl = new AbortController();

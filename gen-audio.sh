@@ -83,7 +83,8 @@ for TEXT in "${TEXTS[@]}"; do
     printf "\r  [%3d/%3d] %s              " "$IDX" "$TOTAL" "$TEXT"
 
     # Jian Premium (韓国語ネイティブ) で AIFF 出力 → AAC m4a 変換
-    if ! say -v 'Jian (Premium)' -r 160 -o "$AIFF" "$TEXT"; then
+    # 文末にピリオドを付けないと say が途中で切れることがある (例: 안녕하세요)
+    if ! say -v 'Jian (Premium)' -r 160 -o "$AIFF" "$TEXT."; then
         echo ""
         echo "  警告: $TEXT の音声合成に失敗"
         rm -f "$AIFF"
