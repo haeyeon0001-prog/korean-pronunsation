@@ -1,0 +1,2679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>韓国語 発音マスター</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+        }
+
+        :root {
+            /* Apple-inspired green palette */
+            --primary: #30a46c;          /* Apple/Notion green */
+            --primary-light: #e7f6ed;
+            --primary-lighter: #f4fbf6;
+            --primary-dark: #1f7a4f;
+            --accent: #f5a524;           /* accent (goreum-like warm) */
+            --success: #30a46c;
+            --danger: #e5484d;
+            --warning: #f5a524;
+            --info: #0091ff;
+            --bg: #f6f9f7;               /* subtle greenish grey, Apple systemBackground-like */
+            --bg-elevated: #ffffff;
+            --card-bg: #ffffff;
+            --text: #1d1d1f;             /* Apple label color */
+            --text-secondary: #6e6e73;   /* Apple secondaryLabel */
+            --text-light: #8e8e93;       /* Apple tertiaryLabel */
+            --border: #e5e7eb;
+            --border-strong: #d1d5db;
+            --radius: 14px;
+            --radius-lg: 20px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 14px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.08);
+            --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            padding-top: max(12px, env(safe-area-inset-top));
+            padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+            overflow: hidden;
+            height: 100vh;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px 10px 14px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--border);
+        }
+        .header .mascot-wrap {
+            width: 42px;
+            height: 42px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header .text-wrap { flex: 1; text-align: left; }
+        .header h1 {
+            font-size: 16px;
+            font-weight: 650;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+        .header .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            font-weight: 400;
+        }
+
+        .container {
+            height: calc(100vh - 60px - max(12px, env(safe-area-inset-top)) - env(safe-area-inset-bottom, 0px));
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 14px;
+        }
+
+        .tab-content {
+            display: none;
+            padding-bottom: 80px;
+            -webkit-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+        }
+        .tab-content.active { display: block; }
+
+        .sub-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            background: rgba(118,118,128,0.12);
+            padding: 3px;
+            border-radius: 10px;
+        }
+        .sub-tab {
+            flex: 1;
+            padding: 7px 8px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 550;
+            color: var(--text);
+            cursor: pointer;
+            transition: background 0.18s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .sub-tab.active {
+            background: white;
+            color: var(--primary-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 3px 8px rgba(0,0,0,0.04);
+        }
+
+        .section-header {
+            font-size: 15px;
+            font-weight: 650;
+            padding: 0 4px 8px 4px;
+            margin-bottom: 10px;
+            margin-top: 4px;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+        .section-header .small {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-secondary);
+            margin-left: 6px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            border: 0.5px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 14px;
+            font-weight: 550;
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(.4,0,.2,1);
+            -webkit-user-select: none;
+            user-select: none;
+            letter-spacing: -0.01em;
+        }
+        .btn:active { transform: scale(0.96); opacity: 0.85; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 1px 3px rgba(48,164,108,0.3); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-info { background: #f2f2f7; color: var(--text); }
+        .btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-gray { background: #f2f2f7; color: var(--text); }
+        .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(58px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-top: 0.5px solid var(--border);
+            display: flex;
+            z-index: 100;
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: color 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item .icon { font-size: 22px; margin-bottom: 2px; line-height: 1; }
+        .nav-item .icon svg { width: 24px; height: 24px; display: block; }
+        .nav-item .icon svg path, .nav-item .icon svg rect, .nav-item .icon svg line {
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .nav-item .icon svg .fill-accent { fill: currentColor; stroke: none; }
+
+        .bottom-nav, .nav-item, .btn, button, select, input, label, .sub-tab {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        .letter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .letter-cell {
+            background: white;
+            border-radius: 12px;
+            padding: 10px 6px;
+            text-align: center;
+            border: 0.5px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .letter-cell:active { transform: scale(0.94); }
+        .letter-cell.doubled { background: var(--primary-lighter); }
+        .letter-cell .hangul {
+            font-size: 30px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.1;
+            margin-bottom: 2px;
+        }
+        .letter-cell .romaji {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 550;
+        }
+        .letter-cell .jp {
+            font-size: 10px;
+            color: var(--text-light);
+            margin-top: 1px;
+        }
+
+        .letter-detail {
+            position: relative;
+            background: linear-gradient(180deg, #ffffff, var(--primary-lighter));
+            border-radius: var(--radius-lg);
+            padding: 16px 18px 18px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            border: 0.5px solid var(--border);
+            overflow: hidden;
+        }
+        .letter-detail::before {
+            content: '';
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(48,164,108,0.12), transparent 70%);
+            pointer-events: none;
+        }
+        .letter-detail .big-hangul {
+            font-size: 88px;
+            font-weight: 550;
+            text-align: center;
+            color: var(--text);
+            line-height: 1;
+            margin: 4px 0 14px 0;
+            letter-spacing: -0.04em;
+        }
+        .letter-detail .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 9px 0;
+            border-bottom: 0.5px solid var(--border);
+            font-size: 14px;
+        }
+        .letter-detail .info-row:last-child { border-bottom: none; }
+        .letter-detail .label { color: var(--text-secondary); font-weight: 400; font-size: 13px; }
+        .letter-detail .value { font-weight: 550; }
+        .letter-detail .tip {
+            background: rgba(48,164,108,0.08);
+            padding: 11px 13px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--text);
+            margin-top: 12px;
+            line-height: 1.55;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .audio-controls .btn { flex: 1; min-width: 80px; padding: 10px 8px; font-size: 12px; }
+
+        .syllable-table {
+            display: grid;
+            grid-template-columns: 40px repeat(10, 1fr);
+            gap: 2px;
+            background: #ddd;
+            padding: 2px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+        .syl-cell {
+            background: white;
+            padding: 8px 2px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .syl-head {
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            padding: 8px 2px;
+        }
+        .syl-cell:active { background: var(--primary-light); }
+
+        .batchim-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .batchim-card {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            border: 1.5px solid var(--border);
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .batchim-card .sound {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 6px;
+        }
+        .batchim-card .letters {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .batchim-card .example {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        .rule-card {
+            background: white;
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+            box-shadow: var(--shadow);
+            border: 1.5px solid var(--border);
+            overflow: hidden;
+        }
+        .rule-header {
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-light), white);
+            border-bottom: 1px solid var(--border);
+        }
+        .rule-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 4px;
+        }
+        .rule-desc {
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+        .rule-body { padding: 12px 14px; }
+        .rule-formula {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--warning);
+        }
+        .rule-example {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #fafbfc;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .rule-example .spell {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        .rule-example .arrow {
+            margin: 0 6px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .rule-example .sound {
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+        .rule-example .jp {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-left: 4px;
+        }
+        .rule-example .mini-tts {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1.5px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        .tts-btn {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .record-panel {
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-top: 12px;
+        }
+        .record-panel .title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .record-btn {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--danger);
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .record-btn.recording {
+            animation: pulse 1s ease-in-out infinite;
+            background: var(--warning);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4); }
+            50% { transform: scale(1.08); box-shadow: 0 4px 20px rgba(243, 156, 18, 0.6); }
+        }
+        .record-center { text-align: center; }
+        .record-status {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 8px;
+            min-height: 16px;
+        }
+        .record-compare {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .record-compare .btn { flex: 1; font-size: 12px; padding: 10px 6px; }
+
+        /* ── 発音評価 ── */
+        .eval-result {
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .eval-result.tier-1 {
+            background: linear-gradient(135deg, #fff9e0, #fff3c4);
+            border: 2px solid #f5a524;
+        }
+        .eval-result.tier-2 {
+            background: linear-gradient(135deg, #e7f6ed, #d5ebe0);
+            border: 2px solid var(--primary);
+        }
+        .eval-result.tier-3 {
+            background: #fff0ed;
+            border: 2px solid #e67e76;
+        }
+        .eval-result .tier-label {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+        }
+        .eval-result.tier-1 .tier-label { color: #b08200; }
+        .eval-result.tier-2 .tier-label { color: var(--primary-dark); }
+        .eval-result.tier-3 .tier-label { color: #b84b44; }
+        .eval-result .tier-detail {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+        .eval-result .heard {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 3px 10px;
+            background: white;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .eval-loading {
+            text-align: center;
+            padding: 14px;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        .eval-loading .spin {
+            display: inline-block;
+            animation: eval-spin 1s linear infinite;
+            margin-right: 6px;
+        }
+        @keyframes eval-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .fab-practice {
+            position: fixed;
+            bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+            right: 14px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            box-shadow: 0 6px 18px rgba(48,164,108,0.35), 0 2px 4px rgba(0,0,0,0.06);
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Mascot: chima-jeogori girl ── */
+        .mascot {
+            width: 100%;
+            height: 100%;
+            display: block;
+            transform-origin: center bottom;
+        }
+        .mascot.speaking {
+            animation: mascot-bounce 0.6s cubic-bezier(.4,0,.2,1) infinite;
+        }
+        .mascot.speaking .mascot-mouth {
+            animation: mascot-mouth 0.35s ease-in-out infinite alternate;
+        }
+        .mascot.speaking .mascot-cheek {
+            animation: mascot-cheek 0.8s ease-in-out infinite;
+        }
+        .mascot.speaking .mascot-note {
+            opacity: 1;
+            animation: mascot-note 0.8s ease-out infinite;
+        }
+        .mascot .mascot-note { opacity: 0; transform-origin: center; }
+        @keyframes mascot-bounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-4%) rotate(-1.5deg); }
+        }
+        @keyframes mascot-mouth {
+            from { transform: scaleY(0.5) translateY(0); }
+            to   { transform: scaleY(1.4) translateY(0); }
+        }
+        @keyframes mascot-cheek {
+            0%, 100% { opacity: 0.55; }
+            50%      { opacity: 0.9; }
+        }
+        @keyframes mascot-note {
+            0%   { opacity: 0; transform: translate(0,0) scale(0.5); }
+            40%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(6px,-24px) scale(1.1); }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)) 16px;
+            overflow-y: auto;
+        }
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-light);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .info-box {
+            background: #fff8e1;
+            border-left: 4px solid var(--warning);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text);
+            margin-bottom: 12px;
+            line-height: 1.55;
+        }
+        .info-box strong { color: var(--primary-dark); }
+
+        input[type=text], input[type=password], select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+        }
+        input[type=text]:focus, input[type=password]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        input[type=range] {
+            width: 100%;
+            margin-top: 6px;
+        }
+
+        /* ═══ 練習タブ ═══ */
+        .mode-switch {
+            display: flex;
+            gap: 6px;
+            background: var(--primary-lighter);
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .mode-switch button {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .mode-switch button.active {
+            background: white;
+            color: var(--primary-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .drill-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .drill-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 10px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+            position: relative;
+            cursor: pointer;
+            transition: background 0.12s, transform 0.08s;
+        }
+        .drill-card:active { background: var(--primary-light); transform: scale(0.97); }
+        .drill-card .word {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1.1;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .drill-card .meaning {
+            font-size: 12px;
+            color: var(--text-light);
+            min-height: 16px;
+        }
+
+        .drill-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .drill-actions button {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: 1.5px solid var(--primary);
+            color: var(--primary);
+            background: white;
+            cursor: pointer;
+        }
+        .drill-actions button.primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ═══ 組立ゲーム ═══ */
+        .game-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .game-progress {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .game-audio-btn {
+            display: block;
+            margin: 0 auto 12px;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(48,164,108,0.35);
+        }
+        .game-audio-btn:active { transform: scale(0.95); }
+        .game-meaning {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 14px;
+        }
+
+        .syl-slots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .syl-block {
+            display: flex;
+            gap: 2px;
+            padding: 6px;
+            background: var(--primary-lighter);
+            border-radius: 10px;
+            border: 1.5px dashed var(--primary);
+        }
+        .syl-block.done {
+            background: #e8f5e9;
+            border-style: solid;
+        }
+        .syl-block.wrong {
+            background: #fdecea;
+            border-color: var(--danger);
+            animation: shake 0.35s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .jamo-slot {
+            width: 34px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 6px;
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-light);
+            box-shadow: inset 0 0 0 1px var(--border);
+        }
+        .jamo-slot.filled {
+            color: var(--primary-dark);
+            background: var(--primary-light);
+        }
+        .jamo-slot.current {
+            box-shadow: inset 0 0 0 2px var(--primary);
+        }
+
+        .jamo-pool {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .jamo-chip {
+            padding: 10px 0;
+            background: white;
+            border: 1.5px solid var(--primary);
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .jamo-chip:active { transform: scale(0.92); }
+        .jamo-chip.used {
+            opacity: 0.25;
+            pointer-events: none;
+        }
+        .jamo-chip.wrong {
+            background: #ffd7d7;
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: chip-shake 0.4s;
+        }
+        @keyframes chip-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .game-controls button {
+            flex: 1;
+            padding: 11px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .game-controls .btn-reset {
+            background: white;
+            color: var(--text-light);
+            border: 1.5px solid var(--border);
+        }
+        .game-controls .btn-check {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(48,164,108,0.3);
+        }
+        .game-controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .game-feedback {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        .game-feedback.ok { background: #e8f5e9; color: #2e7d32; }
+        .game-feedback.ng { background: #fdecea; color: #c62828; }
+
+        .game-score {
+            background: linear-gradient(135deg, var(--primary-light), white);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 20px 14px;
+            text-align: center;
+        }
+        .game-score .score-num {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        .game-score .score-label {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="mascot-wrap" id="mascotHeader"></div>
+        <div class="text-wrap">
+            <h1>韓国語 発音マスター</h1>
+            <div class="subtitle">子音・母音・バッチム・発音変化</div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <!-- Tab 0: 字母 (Consonants & Vowels) -->
+        <div class="tab-content active" id="tab0">
+            <div class="sub-tabs">
+                <div class="sub-tab active" data-subtab="consonants">子音 (19)</div>
+                <div class="sub-tab" data-subtab="vowels">母音 (21)</div>
+            </div>
+            <div id="letters-container"></div>
+        </div>
+
+        <!-- Tab 1: 音節 (Syllables & Batchim) -->
+        <div class="tab-content" id="tab1">
+            <div class="sub-tabs">
+                <div class="sub-tab active" data-subtab="batchim">パッチム</div>
+                <div class="sub-tab" data-subtab="syllables">가나다 表</div>
+            </div>
+            <div id="syllables-container"></div>
+        </div>
+
+        <!-- Tab practice: 練習 -->
+        <div class="tab-content" id="tabpractice">
+            <div class="sub-tabs">
+                <div class="sub-tab active" data-subtab="drill">単語ドリル</div>
+                <div class="sub-tab" data-subtab="game">組立ゲーム</div>
+            </div>
+            <div id="practice-container"></div>
+        </div>
+
+        <!-- Tab 2: 発音規則 -->
+        <div class="tab-content" id="tab2">
+            <div id="rules-container"></div>
+        </div>
+
+        <!-- Tab settings -->
+        <div class="tab-content" id="tabsettings">
+            <div class="section-header">⚙️ 設定</div>
+            <div id="settings-container"></div>
+        </div>
+    </div>
+
+    <button class="fab-practice" id="fabPractice" title="発音練習">🎙️</button>
+
+    <div class="bottom-nav" id="bottomNav">
+        <div class="nav-item active" data-tab="0">
+            <span class="icon"><svg viewBox="0 0 24 24"><!-- ㄱ + ㅏ shape --><path d="M5 4 L12 4 L12 9"/><path d="M17 3 L17 21"/><path d="M17 12 L22 12"/></svg></span>
+            <span>字母</span>
+        </div>
+        <div class="nav-item" data-tab="1">
+            <span class="icon"><svg viewBox="0 0 24 24"><!-- syllable block w/ batchim bottom --><rect x="4" y="3" width="16" height="11" rx="1"/><rect class="fill-accent" x="2" y="16" width="20" height="5" rx="1"/></svg></span>
+            <span>バッチム</span>
+        </div>
+        <div class="nav-item" data-tab="practice">
+            <span class="icon"><svg viewBox="0 0 24 24"><!--練習: pencil on paper --><path d="M4 20 L4 5 L15 5"/><path d="M4 20 L17 20"/><path d="M15 3 L21 9 L12 18 L6 18 L6 12 Z"/><path d="M14 4 L20 10"/></svg></span>
+            <span>練習</span>
+        </div>
+        <div class="nav-item" data-tab="2">
+            <span class="icon"><svg viewBox="0 0 24 24"><!-- sound waves --><path d="M4 12 C 6 8, 6 16, 8 12"/><path d="M10 12 C 12 5, 12 19, 14 12"/><path d="M16 12 C 18 8, 18 16, 20 12"/></svg></span>
+            <span>発音規則</span>
+        </div>
+        <div class="nav-item" data-tab="settings">
+            <span class="icon"><svg viewBox="0 0 24 24"><!-- gear --><circle cx="12" cy="12" r="3" style="fill:none;stroke:currentColor;"/><path d="M12 2 L12 5 M12 19 L12 22 M4.2 4.2 L6.3 6.3 M17.7 17.7 L19.8 19.8 M2 12 L5 12 M19 12 L22 12 M4.2 19.8 L6.3 17.7 M17.7 6.3 L19.8 4.2"/></svg></span>
+            <span>設定</span>
+        </div>
+    </div>
+
+    <!-- Practice Modal -->
+    <div class="modal-overlay" id="practiceModal">
+        <div class="modal">
+            <button class="modal-close" id="modalClose">×</button>
+            <h2 style="font-size:16px;margin-bottom:4px;color:var(--primary-dark);">🎙️ 発音練習</h2>
+            <p style="font-size:12px;color:var(--text-light);margin-bottom:14px;">手本を聞いて → 自分の声を録音 → 比較して確認</p>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+    'use strict';
+
+    // ═══════════════════════════════════════════════════════
+    // 1. DATA
+    // ═══════════════════════════════════════════════════════
+
+    // 子音 (19個: 14基本 + 5濃音)
+    const CONSONANTS = [
+        { h: 'ㄱ', r: 'g/k', jp: 'カ行(語頭)/ガ行(語中)', name: '기역', type: 'basic',
+          tip: '語頭では清音のk、語中では濁音のgに近い音。日本語の「カ」と「ガ」の中間の柔らかい音。',
+          ex: '가 (ガ/カ) - 行く', sample: '가다' },
+        { h: 'ㄴ', r: 'n', jp: 'ナ行', name: '니은', type: 'basic',
+          tip: '日本語のナ行とほぼ同じ。舌先を上歯茎につけて発音。',
+          ex: '나 (ナ) - 私', sample: '나라' },
+        { h: 'ㄷ', r: 'd/t', jp: 'タ行(語頭)/ダ行(語中)', name: '디귿', type: 'basic',
+          tip: '語頭はt、語中はdに近い。日本語の「タ」より少し柔らかく。',
+          ex: '다 (タ) - 全て', sample: '다리' },
+        { h: 'ㄹ', r: 'r/l', jp: 'ラ行', name: '리을', type: 'basic',
+          tip: '語頭・母音間では日本語のラ行、バッチムではlに近い音。舌を軽く弾く。',
+          ex: '라 (ラ)', sample: '라디오' },
+        { h: 'ㅁ', r: 'm', jp: 'マ行', name: '미음', type: 'basic',
+          tip: '日本語のマ行と同じ。唇を閉じて発音。',
+          ex: '마 (マ) - 馬', sample: '마음' },
+        { h: 'ㅂ', r: 'b/p', jp: 'パ行(語頭)/バ行(語中)', name: '비읍', type: 'basic',
+          tip: '語頭はp、語中はbに近い。日本語の「パ」より息が少ない。',
+          ex: '바 (バ/パ)', sample: '바다' },
+        { h: 'ㅅ', r: 's', jp: 'サ行', name: '시옷', type: 'basic',
+          tip: '日本語のサ行と同じ。ㅣと結合すると「シ」の音に。',
+          ex: '사 (サ) - 四', sample: '사랑' },
+        { h: 'ㅇ', r: '(無音)/ng', jp: '母音そのまま/ン', name: '이응', type: 'basic',
+          tip: '語頭では音なし(母音のみ発音)、バッチムでは鼻音ng。',
+          ex: '아 (ア)', sample: '아이' },
+        { h: 'ㅈ', r: 'j/ch', jp: 'チャ行/ジャ行', name: '지읒', type: 'basic',
+          tip: '語頭ではch、語中ではjに近い。日本語の「チ」に近い。',
+          ex: '자 (チャ/ジャ)', sample: '자동차' },
+        { h: 'ㅊ', r: 'ch', jp: 'チャ行(強)', name: '치읓', type: 'aspirated',
+          tip: '激音。息を強く吐き出して発音。ㅈより息の量が多い。',
+          ex: '차 (チャ) - 車', sample: '차' },
+        { h: 'ㅋ', r: 'k', jp: 'カ行(強)', name: '키읔', type: 'aspirated',
+          tip: '激音。息を強く吐きながらk。ㄱより息の量が多い。',
+          ex: '카 (カ)', sample: '커피' },
+        { h: 'ㅌ', r: 't', jp: 'タ行(強)', name: '티읕', type: 'aspirated',
+          tip: '激音。息を強く吐きながらt。ㄷより息の量が多い。',
+          ex: '타 (タ) - 乗る', sample: '타다' },
+        { h: 'ㅍ', r: 'p', jp: 'パ行(強)', name: '피읖', type: 'aspirated',
+          tip: '激音。息を強く吐きながらp。ㅂより息の量が多い。',
+          ex: '파 (パ) - ネギ', sample: '파도' },
+        { h: 'ㅎ', r: 'h', jp: 'ハ行', name: '히읗', type: 'basic',
+          tip: '日本語のハ行と同じ。語中では弱化・脱落することも。',
+          ex: '하 (ハ)', sample: '하늘' },
+        { h: 'ㄲ', r: 'kk', jp: '詰まったカ', name: '쌍기역', type: 'tense',
+          tip: '濃音。喉を締めて息を漏らさずに発音。「まっか」の「っか」に近い。',
+          ex: '까 (ッカ)', sample: '까마귀' },
+        { h: 'ㄸ', r: 'tt', jp: '詰まったタ', name: '쌍디귿', type: 'tense',
+          tip: '濃音。喉を締めて発音。「いった」の「った」に近い。',
+          ex: '따 (ッタ)', sample: '따뜻하다' },
+        { h: 'ㅃ', r: 'pp', jp: '詰まったパ', name: '쌍비읍', type: 'tense',
+          tip: '濃音。唇と喉を締めて発音。「さっぱり」の「っぱ」に近い。',
+          ex: '빠 (ッパ)', sample: '빨리' },
+        { h: 'ㅆ', r: 'ss', jp: '詰まったサ', name: '쌍시옷', type: 'tense',
+          tip: '濃音。喉を締めて発音。日本語の「っさ」に近い。',
+          ex: '싸 (ッサ)', sample: '싸다' },
+        { h: 'ㅉ', r: 'jj', jp: '詰まったチャ', name: '쌍지읒', type: 'tense',
+          tip: '濃音。喉を締めて発音。「まっちゃ」の「っちゃ」に近い。',
+          ex: '짜 (ッチャ)', sample: '짜다' }
+    ];
+
+    // 母音 (21個: 10基本 + 11複合)
+    const VOWELS = [
+        { h: 'ㅏ', r: 'a', jp: 'ア', type: 'basic', tip: '日本語の「ア」より口を大きく開けて。', sample: '아' },
+        { h: 'ㅑ', r: 'ya', jp: 'ヤ', type: 'basic', tip: '「ヤ」と同じ。y音を強めに。', sample: '야' },
+        { h: 'ㅓ', r: 'eo', jp: 'オ(口を大きく)', type: 'basic', tip: '口を縦に開けて「ア」の口で「オ」を出す音。', sample: '어' },
+        { h: 'ㅕ', r: 'yeo', jp: 'ヨ(口を大きく)', type: 'basic', tip: 'ㅓにy音を加えた音。', sample: '여' },
+        { h: 'ㅗ', r: 'o', jp: 'オ(唇丸く)', type: 'basic', tip: '唇を丸く突き出して「オ」。', sample: '오' },
+        { h: 'ㅛ', r: 'yo', jp: 'ヨ(唇丸く)', type: 'basic', tip: 'ㅗにy音を加えた音。', sample: '요' },
+        { h: 'ㅜ', r: 'u', jp: 'ウ(唇丸く)', type: 'basic', tip: '唇を丸く突き出して「ウ」。', sample: '우' },
+        { h: 'ㅠ', r: 'yu', jp: 'ユ', type: 'basic', tip: 'ㅜにy音を加えた「ユ」。', sample: '유' },
+        { h: 'ㅡ', r: 'eu', jp: 'ウ(口を横に)', type: 'basic', tip: '口を横に引いて「ウ」。微笑むように。', sample: '으' },
+        { h: 'ㅣ', r: 'i', jp: 'イ', type: 'basic', tip: '日本語の「イ」と同じ。', sample: '이' },
+        { h: 'ㅐ', r: 'ae', jp: 'エ(口大きく)', type: 'complex', tip: 'ㅏ+ㅣ。口を大きく開けた「エ」。', sample: '애' },
+        { h: 'ㅒ', r: 'yae', jp: 'イェ(口大きく)', type: 'complex', tip: 'ㅐにy音を加えた音。', sample: '얘' },
+        { h: 'ㅔ', r: 'e', jp: 'エ', type: 'complex', tip: '日本語の「エ」とほぼ同じ。ㅐとの区別は現代では薄い。', sample: '에' },
+        { h: 'ㅖ', r: 'ye', jp: 'イェ', type: 'complex', tip: 'ㅔにy音を加えた音。', sample: '예' },
+        { h: 'ㅘ', r: 'wa', jp: 'ワ', type: 'complex', tip: 'ㅗ+ㅏ。「ワ」の音。', sample: '와' },
+        { h: 'ㅙ', r: 'wae', jp: 'ウェ(口大きく)', type: 'complex', tip: 'ㅗ+ㅐ。「ウェ」の音。', sample: '왜' },
+        { h: 'ㅚ', r: 'oe', jp: 'ウェ', type: 'complex', tip: 'ㅗ+ㅣ。現代では「ウェ」に近い。', sample: '외' },
+        { h: 'ㅝ', r: 'wo', jp: 'ウォ', type: 'complex', tip: 'ㅜ+ㅓ。「ウォ」の音。', sample: '워' },
+        { h: 'ㅞ', r: 'we', jp: 'ウェ', type: 'complex', tip: 'ㅜ+ㅔ。「ウェ」の音。', sample: '웨' },
+        { h: 'ㅟ', r: 'wi', jp: 'ウィ', type: 'complex', tip: 'ㅜ+ㅣ。「ウィ」の音。', sample: '위' },
+        { h: 'ㅢ', r: 'ui', jp: 'ウィ(イに近い)', type: 'complex', tip: 'ㅡ+ㅣ。語頭以外では「イ」、助詞「의」では「エ」と発音。', sample: '의' }
+    ];
+
+    // 가나다表風チャート: 子音 x 基本母音
+    const SYLLABLE_CONSONANTS = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅎ'];
+    const SYLLABLE_VOWELS_BASIC = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+    const SYLLABLE_VOWELS_COMPLEX = ['ㅐ','ㅒ','ㅔ','ㅖ','ㅘ','ㅙ','ㅚ','ㅝ','ㅞ','ㅟ','ㅢ'];
+    const SYLLABLE_VOWELS = SYLLABLE_VOWELS_BASIC.concat(SYLLABLE_VOWELS_COMPLEX);
+    // ハングルは Unicode: 0xAC00 + (cho*21 + jung)*28 + jong
+    const CHO_ORDER = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const JUNG_ORDER = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+
+    function buildSyllable(cho, jung, jong) {
+        jong = jong || 0;
+        var ci = CHO_ORDER.indexOf(cho);
+        var ji = JUNG_ORDER.indexOf(jung);
+        if (ci < 0 || ji < 0) return '';
+        return String.fromCharCode(0xAC00 + (ci * 21 + ji) * 28 + jong);
+    }
+
+    // 終声(バッチム)一覧: index 0 は空 (バッチム無し)
+    const JONG_ORDER = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+    // ハングル1音節を [初声, 中声, 終声] に分解。終声無しは空文字。
+    function decomposeSyllable(ch) {
+        var code = ch.charCodeAt(0) - 0xAC00;
+        if (code < 0 || code >= 11172) return [ch, '', ''];
+        var cho = CHO_ORDER[Math.floor(code / (21 * 28))];
+        var jung = JUNG_ORDER[Math.floor((code % (21 * 28)) / 28)];
+        var jong = JONG_ORDER[code % 28];
+        return [cho, jung, jong];
+    }
+
+    // バッチム (7代表音)
+    const BATCHIMS = [
+        { sound: '[ㄱ]', letters: 'ㄱ ㅋ ㄲ ㄳ ㄺ', jp: '詰まるk音', tip: '喉を閉じて息を止める。「学校」の「っ」に近い。',
+          examples: [{w:'학교', r:'[학꾜]', m:'学校'}, {w:'밖', r:'[박]', m:'外'}] },
+        { sound: '[ㄴ]', letters: 'ㄴ ㄵ ㄶ', jp: 'ン(舌先)', tip: '舌先を上歯茎につけて鼻に抜ける「ン」。',
+          examples: [{w:'한국', r:'[한국]', m:'韓国'}, {w:'앉다', r:'[안따]', m:'座る'}] },
+        { sound: '[ㄷ]', letters: 'ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ', jp: '詰まるt音', tip: '舌先を上歯茎につけて息を止める。',
+          examples: [{w:'옷', r:'[옫]', m:'服'}, {w:'빛', r:'[빋]', m:'光'}] },
+        { sound: '[ㄹ]', letters: 'ㄹ ㄽ ㄾ ㅀ', jp: 'L音', tip: '舌先を上歯茎に当てたまま離さない。英語のL。',
+          examples: [{w:'물', r:'[물]', m:'水'}, {w:'일', r:'[일]', m:'仕事'}] },
+        { sound: '[ㅁ]', letters: 'ㅁ ㄻ', jp: 'ン(唇)', tip: '唇を閉じて鼻に抜ける「ン」。',
+          examples: [{w:'엄마', r:'[엄마]', m:'母'}, {w:'김치', r:'[김치]', m:'キムチ'}] },
+        { sound: '[ㅂ]', letters: 'ㅂ ㅍ ㄿ ㅄ', jp: '詰まるp音', tip: '唇を閉じて息を止める。',
+          examples: [{w:'입', r:'[입]', m:'口'}, {w:'앞', r:'[압]', m:'前'}] },
+        { sound: '[ㅇ]', letters: 'ㅇ', jp: 'ング', tip: '口を開けたまま鼻に抜ける「ング」。舌はどこにもつけない。',
+          examples: [{w:'공항', r:'[공항]', m:'空港'}, {w:'사랑', r:'[사랑]', m:'愛'}] }
+    ];
+
+    // 練習用語彙: 子音+母音のみ (バッチム無し) 30語
+    const PRACTICE_CV = [
+        { w:'가다', m:'行く' }, { w:'오다', m:'来る' }, { w:'사다', m:'買う' },
+        { w:'보다', m:'見る' }, { w:'자다', m:'寝る' }, { w:'나라', m:'国' },
+        { w:'아기', m:'赤ちゃん' }, { w:'바나나', m:'バナナ' }, { w:'도자기', m:'陶磁器' },
+        { w:'구두', m:'靴' }, { w:'모자', m:'帽子' }, { w:'가수', m:'歌手' },
+        { w:'나무', m:'木' }, { w:'바다', m:'海' }, { w:'사자', m:'ライオン' },
+        { w:'치마', m:'スカート' }, { w:'커피', m:'コーヒー' }, { w:'어머니', m:'母' },
+        { w:'아버지', m:'父' }, { w:'기차', m:'汽車' }, { w:'주소', m:'住所' },
+        { w:'도시', m:'都市' }, { w:'머리', m:'頭' }, { w:'고기', m:'肉' },
+        { w:'가게', m:'店' }, { w:'파도', m:'波' }, { w:'하나', m:'ひとつ' },
+        { w:'두부', m:'豆腐' }, { w:'노래', m:'歌' }, { w:'다리', m:'橋/脚' }
+    ];
+
+    // 練習用語彙: 子音+母音+バッチム 30語
+    const PRACTICE_CVC = [
+        { w:'학교', m:'学校' }, { w:'선생님', m:'先生' }, { w:'가방', m:'カバン' },
+        { w:'책', m:'本' }, { w:'공책', m:'ノート' }, { w:'연필', m:'鉛筆' },
+        { w:'시간', m:'時間' }, { w:'친구', m:'友達' }, { w:'한국', m:'韓国' },
+        { w:'일본', m:'日本' }, { w:'집', m:'家' }, { w:'물', m:'水' },
+        { w:'밥', m:'ご飯' }, { w:'음식', m:'食べ物' }, { w:'사랑', m:'愛' },
+        { w:'행복', m:'幸福' }, { w:'공항', m:'空港' }, { w:'식당', m:'食堂' },
+        { w:'가족', m:'家族' }, { w:'동생', m:'弟/妹' }, { w:'형', m:'兄' },
+        { w:'언니', m:'お姉さん' }, { w:'남자', m:'男' }, { w:'선물', m:'プレゼント' },
+        { w:'시장', m:'市場' }, { w:'빵', m:'パン' }, { w:'눈', m:'目/雪' },
+        { w:'손', m:'手' }, { w:'병원', m:'病院' }, { w:'약속', m:'約束' }
+    ];
+
+    // 発音変化ルール
+    const RULES = [
+        {
+            title: '① 連音化 (연음화)',
+            desc: 'バッチムの次に母音(ㅇ)が来ると、バッチムが次の音節の初声として発音される。',
+            formula: 'バッチム + ㅇ母音 → バッチム音が移動',
+            examples: [
+                { spell: '한국어', sound: '[한구거]', m: '韓国語' },
+                { spell: '음악', sound: '[으막]', m: '音楽' },
+                { spell: '꽃이', sound: '[꼬치]', m: '花が' },
+                { spell: '있어요', sound: '[이써요]', m: 'あります' },
+                { spell: '밥을', sound: '[바블]', m: 'ご飯を' }
+            ]
+        },
+        {
+            title: '② 濃音化 (경음화)',
+            desc: '詰まる音のバッチム[ㄱ][ㄷ][ㅂ]の後、平音ㄱㄷㅂㅅㅈが濃音ㄲㄸㅃㅆㅉになる。',
+            formula: '[ㄱ/ㄷ/ㅂ] + ㄱㄷㅂㅅㅈ → ㄲㄸㅃㅆㅉ',
+            examples: [
+                { spell: '학교', sound: '[학꾜]', m: '学校' },
+                { spell: '식당', sound: '[식땅]', m: '食堂' },
+                { spell: '입국', sound: '[입꾹]', m: '入国' },
+                { spell: '책상', sound: '[책쌍]', m: '机' },
+                { spell: '낮잠', sound: '[낟짬]', m: '昼寝' }
+            ]
+        },
+        {
+            title: '③ 激音化 (격음화)',
+            desc: 'ㅎとㄱㄷㅂㅈが出会うと、激音ㅋㅌㅍㅊに変化する。',
+            formula: 'ㅎ + ㄱㄷㅂㅈ (逆も) → ㅋㅌㅍㅊ',
+            examples: [
+                { spell: '좋다', sound: '[조타]', m: '良い' },
+                { spell: '입학', sound: '[이팍]', m: '入学' },
+                { spell: '축하', sound: '[추카]', m: '祝賀' },
+                { spell: '많다', sound: '[만타]', m: '多い' },
+                { spell: '싫다', sound: '[실타]', m: '嫌だ' }
+            ]
+        },
+        {
+            title: '④ 鼻音化 (비음화)',
+            desc: '閉鎖音[ㄱ][ㄷ][ㅂ]の後に鼻音ㄴㅁが来ると、バッチムが鼻音[ㅇ][ㄴ][ㅁ]に変化。',
+            formula: '[ㄱ]+ㄴㅁ→[ㅇ] / [ㄷ]+ㄴㅁ→[ㄴ] / [ㅂ]+ㄴㅁ→[ㅁ]',
+            examples: [
+                { spell: '국물', sound: '[궁물]', m: 'スープ' },
+                { spell: '한국말', sound: '[한궁말]', m: '韓国語' },
+                { spell: '끝나다', sound: '[끈나다]', m: '終わる' },
+                { spell: '입니다', sound: '[임니다]', m: 'です' },
+                { spell: '감사합니다', sound: '[감사함니다]', m: 'ありがとう' }
+            ]
+        },
+        {
+            title: '⑤ 流音化 (유음화)',
+            desc: 'ㄴとㄹが隣り合うと、両方ともㄹ[l]音になる。',
+            formula: 'ㄴ+ㄹ / ㄹ+ㄴ → [ㄹㄹ]',
+            examples: [
+                { spell: '신라', sound: '[실라]', m: '新羅' },
+                { spell: '연락', sound: '[열락]', m: '連絡' },
+                { spell: '설날', sound: '[설ː랄]', m: '元日' },
+                { spell: '편리', sound: '[펼리]', m: '便利' },
+                { spell: '일년', sound: '[일련]', m: '一年' }
+            ]
+        },
+        {
+            title: '⑥ 口蓋音化 (구개음화)',
+            desc: 'バッチムㄷㅌの後に이/야/여などが来ると、ㄷ→ㅈ、ㅌ→ㅊに変化。',
+            formula: 'ㄷ+이 → [지] / ㅌ+이 → [치]',
+            examples: [
+                { spell: '같이', sound: '[가치]', m: '一緒に' },
+                { spell: '해돋이', sound: '[해도지]', m: '日の出' },
+                { spell: '굳이', sound: '[구지]', m: 'あえて' },
+                { spell: '붙여', sound: '[부쳐]', m: '貼って' }
+            ]
+        },
+        {
+            title: '⑦ ㅎ弱化・脱落',
+            desc: '母音や有声音(ㄴㄹㅁㅇ)の間のㅎは弱まったり脱落したりする。',
+            formula: '母音/ㄴㄹㅁㅇ + ㅎ + 母音 → ㅎ脱落',
+            examples: [
+                { spell: '좋아요', sound: '[조아요]', m: '良いです' },
+                { spell: '많아요', sound: '[마나요]', m: '多いです' },
+                { spell: '싫어요', sound: '[시러요]', m: '嫌です' },
+                { spell: '넣어', sound: '[너어]', m: '入れて' }
+            ]
+        },
+        {
+            title: '⑧ ㄴ添加 (ㄴ첨가)',
+            desc: '合成語でバッチムの後に이/야/여/요/유が来ると、ㄴ音が挿入される。',
+            formula: 'バッチム + 이/야/여/요/유 → +ㄴ音',
+            examples: [
+                { spell: '한국요리', sound: '[한궁뇨리]', m: '韓国料理' },
+                { spell: '꽃잎', sound: '[꼰닙]', m: '花びら' },
+                { spell: '색연필', sound: '[생년필]', m: '色鉛筆' },
+                { spell: '서울역', sound: '[서울력]', m: 'ソウル駅' }
+            ]
+        }
+    ];
+
+    // ═══════════════════════════════════════════════════════
+    // 2. APP STATE
+    // ═══════════════════════════════════════════════════════
+    const STORAGE_KEY = 'korean_pron_v1';
+    const APP_STATE = {
+        currentTab: 0,
+        subtab0: 'consonants',
+        subtab1: 'batchim',
+        subtabPractice: 'drill',
+        practiceMode: 'cv',
+        gameMode: 'cv',
+        selectedLetter: null,
+        openaiApiKey: '',
+        ttsVoice: 'nova',
+        ttsSpeed: 0.85,
+        lastSync: new Date().toISOString()
+    };
+
+    function loadState() {
+        try {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) Object.assign(APP_STATE, JSON.parse(saved));
+        } catch(e) {}
+    }
+    function saveState() {
+        try {
+            APP_STATE.lastSync = new Date().toISOString();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(APP_STATE));
+        } catch(e) {}
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 3. TTS (OpenAI primary, SpeechSynthesis fallback)
+    // ═══════════════════════════════════════════════════════
+    let ttsVoice = null;
+    let ttsReady = false;
+
+    function isKoreanVoice(v) {
+        var lang = (v.lang || '').replace('_','-').toLowerCase();
+        return lang.indexOf('ko') === 0;
+    }
+
+    function findBestVoice() {
+        var voices = (typeof speechSynthesis !== 'undefined') ? speechSynthesis.getVoices() : [];
+        if (!voices.length) return null;
+        var ko = voices.filter(isKoreanVoice);
+        if (!ko.length) return null;
+        var premium = ko.filter(function(v) { return /enhanced|premium|natural/i.test(v.name); });
+        if (premium.length) return premium[0];
+        var yuna = ko.find(function(v) { return /yuna/i.test(v.name); });
+        if (yuna) return yuna;
+        var google = ko.find(function(v) { return /google/i.test(v.name); });
+        if (google) return google;
+        return ko[0];
+    }
+
+    function initTTSVoice() {
+        var best = findBestVoice();
+        if (best) { ttsVoice = best; ttsReady = true; }
+    }
+
+    if (typeof speechSynthesis !== 'undefined') {
+        speechSynthesis.onvoiceschanged = initTTSVoice;
+        initTTSVoice();
+        setTimeout(initTTSVoice, 500);
+        setTimeout(initTTSVoice, 2000);
+    }
+
+    let currentTTSAudio = null;
+    let currentTTSAbort = null;
+    let ttsRequestId = 0;
+    let lastTTSBtn = null;
+
+    function stopAllTTS() {
+        if (currentTTSAbort) { currentTTSAbort.abort(); currentTTSAbort = null; }
+        if (currentTTSAudio) { currentTTSAudio.pause(); currentTTSAudio.src = ''; currentTTSAudio = null; }
+        stopWebAudio();
+        setMascotSpeaking(false);
+        if (lastTTSBtn) {
+            lastTTSBtn.style.background = '';
+            lastTTSBtn.style.color = '';
+            if (lastTTSBtn.dataset.origText) lastTTSBtn.textContent = lastTTSBtn.dataset.origText;
+            lastTTSBtn = null;
+        }
+        if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    }
+
+    function showToast(msg, isError) {
+        var t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        if (isError) t.style.background = 'rgba(231, 76, 60, 0.95)';
+        document.body.appendChild(t);
+        setTimeout(function() { t.remove(); }, 2800);
+    }
+
+    // Pre-recorded audio manifest + Web Audio API で末尾クリップを防止
+    let AUDIO_MANIFEST = {};
+    let audioCtx = null;
+    const decodedBufferCache = {};  // filename → AudioBuffer
+    let currentAudioSource = null;   // 再生中の AudioBufferSourceNode
+
+    function getAudioCtx() {
+        if (!audioCtx) {
+            var Ctx = window.AudioContext || window.webkitAudioContext;
+            if (Ctx) audioCtx = new Ctx();
+        }
+        return audioCtx;
+    }
+
+    // iOS 判定: iPhone/iPad/iPod は Web Audio API がサイレントスイッチで
+    // ミュートされるため、HTML5 <audio> 経由で「メディア」チャネルに流す。
+    const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.userAgent.indexOf('Mac') >= 0 && 'ontouchend' in document);
+
+    // HTML5 Audio 用の永続要素 (iOS 向けに初回タップで unlock)
+    let primaryAudio = null;
+    let audioUnlocked = false;
+
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        // AudioContext (Web Audio) unlock
+        var ctx = getAudioCtx();
+        if (ctx) {
+            try {
+                if (ctx.state === 'suspended') ctx.resume();
+                var buf = ctx.createBuffer(1, 1, 22050);
+                var src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.start(0);
+            } catch(e) {}
+        }
+        // HTML5 Audio 要素 unlock (iOS のメディアチャネルを開通)
+        if (!primaryAudio) {
+            primaryAudio = new Audio();
+            primaryAudio.preload = 'auto';
+            primaryAudio.playsInline = true;
+        }
+        try {
+            // 短い無音 MP3 (≒0.05s) — iOS のメディアセッションを "アクティベート"
+            primaryAudio.src = 'data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgID////////////////////////////////////////////8AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABSAJAJAQgAAgAAAAnGMHkkXAAAAAAD/+xDEAAPH3Yz0AAR8AAA/wAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQxCADwAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+            var p = primaryAudio.play();
+            if (p && p.then) p.then(function() { primaryAudio.pause(); }, function() {});
+        } catch(e) {}
+        audioUnlocked = true;
+    }
+    ['touchstart', 'mousedown', 'click'].forEach(function(ev) {
+        document.addEventListener(ev, unlockAudio, { once: false, capture: true, passive: true });
+    });
+
+    function playViaHtml5(fname, btn, speedOverride, resetBtn) {
+        if (!primaryAudio) {
+            primaryAudio = new Audio();
+            primaryAudio.preload = 'auto';
+            primaryAudio.playsInline = true;
+        }
+        try { primaryAudio.pause(); } catch(e) {}
+        primaryAudio.src = 'audio/' + fname;
+        primaryAudio.playbackRate = speedOverride || 1.0;
+        primaryAudio.onplay = function() { setMascotSpeaking(true); };
+        primaryAudio.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+        primaryAudio.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+        primaryAudio.onpause = function() {
+            if (primaryAudio.ended) return;
+            setMascotSpeaking(false);
+        };
+        currentTTSAudio = primaryAudio;
+        var p = primaryAudio.play();
+        if (p && p.catch) p.catch(function(err) {
+            console.warn('HTML5 Audio playback failed:', err);
+            setMascotSpeaking(false);
+            if (resetBtn) resetBtn();
+        });
+        return true;
+    }
+
+    // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
+    var AUDIO_VERSION = 'openai-nova-2026-04-24';
+    function loadAudioManifest() {
+        return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
+            .then(function(r) { return r.ok ? r.json() : {}; })
+            .then(function(m) { AUDIO_MANIFEST = m || {}; })
+            .catch(function() { AUDIO_MANIFEST = {}; });
+    }
+
+    // MP3 をデコードして末尾に 250ms の無音を加えた AudioBuffer を返す
+    function getPaddedBuffer(fname) {
+        if (decodedBufferCache[fname]) return Promise.resolve(decodedBufferCache[fname]);
+        var ctx = getAudioCtx();
+        if (!ctx) return Promise.reject(new Error('Web Audio API not supported'));
+        return fetch('audio/' + fname)
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) {
+                return new Promise(function(resolve, reject) {
+                    ctx.decodeAudioData(buf, resolve, reject);
+                });
+            })
+            .then(function(decoded) {
+                var padSec = 0.25;
+                var padSamples = Math.floor(decoded.sampleRate * padSec);
+                var ch = decoded.numberOfChannels;
+                var total = decoded.length + padSamples;
+                var padded = ctx.createBuffer(ch, total, decoded.sampleRate);
+                for (var c = 0; c < ch; c++) {
+                    var src = decoded.getChannelData(c);
+                    var dst = padded.getChannelData(c);
+                    dst.set(src, 0);
+                    // 残り (padSamples) は自動で 0 (無音)
+                }
+                decodedBufferCache[fname] = padded;
+                return padded;
+            });
+    }
+
+    function stopWebAudio() {
+        if (currentAudioSource) {
+            try { currentAudioSource.stop(0); } catch(e) {}
+            try { currentAudioSource.disconnect(); } catch(e) {}
+            currentAudioSource = null;
+        }
+    }
+
+    function playPrerecorded(fname, btn, speedOverride, resetBtn) {
+        if (IS_IOS) return playViaHtml5(fname, btn, speedOverride, resetBtn);
+        var ctx = getAudioCtx();
+        if (!ctx) return false;
+        stopWebAudio();
+        // iOS: resume を await してから再生。ユーザージェスチャー内で呼ばれた前提。
+        var resumed = (ctx.state === 'suspended') ? ctx.resume() : Promise.resolve();
+        resumed.then(function() {
+            return getPaddedBuffer(fname);
+        }).then(function(buffer) {
+            if (ctx.state !== 'running') {
+                throw new Error('AudioContext not running (state=' + ctx.state + ')');
+            }
+            var src = ctx.createBufferSource();
+            src.buffer = buffer;
+            if (speedOverride) src.playbackRate.value = speedOverride;
+            src.connect(ctx.destination);
+            setMascotSpeaking(true);
+            src.onended = function() {
+                if (currentAudioSource === src) currentAudioSource = null;
+                setMascotSpeaking(false);
+                if (resetBtn) resetBtn();
+            };
+            currentAudioSource = src;
+            src.start(0);
+        }).catch(function(err) {
+            console.warn('Web Audio playback failed:', err);
+            setMascotSpeaking(false);
+            // HTML5 Audio にフォールバック
+            var audio = new Audio('audio/' + fname);
+            if (speedOverride) audio.playbackRate = speedOverride;
+            audio.onplay = function() { setMascotSpeaking(true); };
+            audio.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+            audio.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+            audio.play().catch(function(e) {
+                console.warn('HTML5 Audio playback failed:', e);
+                if (resetBtn) resetBtn();
+            });
+            currentTTSAudio = audio;
+        });
+        return true;
+    }
+
+    function speakText(text, btn, speedOverride) {
+        stopAllTTS();
+        var resetBtn = null;
+        if (btn) {
+            btn.dataset.origText = btn.dataset.origText || btn.textContent;
+            btn.style.background = 'var(--primary)';
+            btn.style.color = 'white';
+            btn.textContent = '▶';
+            lastTTSBtn = btn;
+            resetBtn = function() {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.textContent = btn.dataset.origText;
+                if (lastTTSBtn === btn) lastTTSBtn = null;
+            };
+        }
+
+        // ① OpenAI TTS (APIキーが設定されていれば最優先 — 最も自然な発音)
+        var apiKey = (APP_STATE.openaiApiKey || '').trim();
+
+        // ② APIキー無しなら事前録音MP3 (Google TTS)
+        var fname = AUDIO_MANIFEST[text];
+        if (!apiKey && fname) {
+            if (playPrerecorded(fname, btn, speedOverride, resetBtn)) return;
+        }
+
+        if (apiKey) {
+            var myId = ++ttsRequestId;
+            var abortCtrl = new AbortController();
+            currentTTSAbort = abortCtrl;
+            fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'tts-1',
+                    voice: APP_STATE.ttsVoice || 'nova',
+                    input: text,
+                    speed: speedOverride || APP_STATE.ttsSpeed || 0.85,
+                    response_format: 'mp3'
+                }),
+                signal: abortCtrl.signal
+            })
+            .then(function(res) {
+                if (myId !== ttsRequestId) throw new Error('cancelled');
+                if (!res.ok) {
+                    return res.json().then(function(err) {
+                        throw new Error(err.error ? err.error.message : 'API Error ' + res.status);
+                    });
+                }
+                return res.blob();
+            })
+            .then(function(blob) {
+                if (myId !== ttsRequestId) return;
+                var url = URL.createObjectURL(blob);
+                var audio = new Audio(url);
+                currentTTSAudio = audio;
+                currentTTSAbort = null;
+                audio.onended = function() {
+                    URL.revokeObjectURL(url);
+                    if (currentTTSAudio === audio) currentTTSAudio = null;
+                    if (resetBtn) resetBtn();
+                };
+                audio.onerror = function() {
+                    URL.revokeObjectURL(url);
+                    if (currentTTSAudio === audio) currentTTSAudio = null;
+                    if (resetBtn) resetBtn();
+                };
+                audio.play().catch(function() { if (resetBtn) resetBtn(); });
+            })
+            .catch(function(err) {
+                if (err.name === 'AbortError' || err.message === 'cancelled') return;
+                console.error('OpenAI TTS error:', err);
+                if (fname && playPrerecorded(fname, btn, speedOverride, resetBtn)) return;
+                if (resetBtn) resetBtn();
+                showToast('TTS Error: ' + err.message, true);
+            });
+            return;
+        }
+
+        if (typeof speechSynthesis === 'undefined') { if (resetBtn) resetBtn(); return; }
+        if (!ttsReady) initTTSVoice();
+        var utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ko-KR';
+        utter.rate = speedOverride || 0.85;
+        utter.pitch = 1.0;
+        if (ttsVoice && isKoreanVoice(ttsVoice)) {
+            utter.voice = ttsVoice;
+        } else {
+            var voices = speechSynthesis.getVoices();
+            var filtered = voices.filter(isKoreanVoice);
+            if (filtered.length) { utter.voice = filtered[0]; ttsVoice = filtered[0]; }
+        }
+        if (resetBtn) {
+            var safetyTimer = setTimeout(resetBtn, Math.max(6000, text.length * 200));
+            utter.onend = function() { clearTimeout(safetyTimer); resetBtn(); };
+            utter.onerror = function() { clearTimeout(safetyTimer); resetBtn(); };
+        }
+        speechSynthesis.speak(utter);
+        if (/iPhone|iPad/i.test(navigator.userAgent) && resetBtn) {
+            var resumeInterval = setInterval(function() {
+                if (!speechSynthesis.speaking) { clearInterval(resumeInterval); return; }
+                speechSynthesis.pause();
+                speechSynthesis.resume();
+            }, 10000);
+            var origOnEnd = utter.onend;
+            utter.onend = function() { clearInterval(resumeInterval); if (origOnEnd) origOnEnd(); };
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 4. RECORDING (MediaRecorder API)
+    // ═══════════════════════════════════════════════════════
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedBlob = null;
+    let recordedAudio = null;
+    let recordStream = null;
+
+    async function startRecording(statusEl, btnEl) {
+        try {
+            recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            recordedChunks = [];
+            var mime = '';
+            var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/mpeg'];
+            for (var i = 0; i < candidates.length; i++) {
+                if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
+                    mime = candidates[i]; break;
+                }
+            }
+            mediaRecorder = mime ? new MediaRecorder(recordStream, { mimeType: mime }) : new MediaRecorder(recordStream);
+            mediaRecorder.ondataavailable = function(e) {
+                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+            };
+            mediaRecorder.onstop = function() {
+                recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
+                recordedAudio = new Audio(URL.createObjectURL(recordedBlob));
+                if (statusEl) statusEl.textContent = '✓ 録音完了 (' + Math.round(recordedBlob.size/1024) + 'KB)';
+                if (recordStream) {
+                    recordStream.getTracks().forEach(function(t) { t.stop(); });
+                    recordStream = null;
+                }
+                var playBtn = document.querySelector('.play-recorded-btn');
+                if (playBtn) playBtn.disabled = false;
+                var evalBtn = document.getElementById('evalBtn');
+                if (evalBtn) evalBtn.disabled = false;
+                var resultEl = document.getElementById('evalResult');
+                if (resultEl) resultEl.innerHTML = '';
+            };
+            mediaRecorder.start();
+            if (btnEl) btnEl.classList.add('recording');
+            if (btnEl) btnEl.textContent = '■';
+            if (statusEl) statusEl.textContent = '● 録音中… もう一度タップで停止';
+        } catch(err) {
+            console.error(err);
+            showToast('マイクへのアクセスが拒否されました', true);
+            if (statusEl) statusEl.textContent = '';
+            if (btnEl) { btnEl.classList.remove('recording'); btnEl.textContent = '🎙️'; }
+        }
+    }
+
+    function stopRecording(btnEl) {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+        if (btnEl) btnEl.classList.remove('recording');
+        if (btnEl) btnEl.textContent = '🎙️';
+    }
+
+    function playRecorded() {
+        if (!recordedAudio) return;
+        stopAllTTS();
+        try { recordedAudio.currentTime = 0; } catch(e) {}
+        recordedAudio.play();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //   発音評価 (Whisper APIで文字起こし → 一致度スコア)
+    // ═══════════════════════════════════════════════════════
+    let currentPracticeTarget = '';
+
+    // ハングル1音節 → 字母配列 (cho, jung, jong) へ展開
+    function toJamoSeq(s) {
+        var out = [];
+        for (var i = 0; i < s.length; i++) {
+            var ch = s[i];
+            var code = ch.charCodeAt(0) - 0xAC00;
+            if (code >= 0 && code < 11172) {
+                out.push(CHO_ORDER[Math.floor(code / (21 * 28))]);
+                out.push(JUNG_ORDER[Math.floor((code % (21 * 28)) / 28)]);
+                var jong = JONG_ORDER[code % 28];
+                if (jong) out.push(jong);
+            } else if (/\s/.test(ch)) {
+                continue;
+            } else {
+                out.push(ch);
+            }
+        }
+        return out;
+    }
+
+    function editDistance(a, b) {
+        var n = a.length, m = b.length;
+        if (n === 0) return m;
+        if (m === 0) return n;
+        var dp = new Array(m + 1);
+        for (var j = 0; j <= m; j++) dp[j] = j;
+        for (var i = 1; i <= n; i++) {
+            var prev = dp[0];
+            dp[0] = i;
+            for (var j = 1; j <= m; j++) {
+                var tmp = dp[j];
+                dp[j] = (a[i-1] === b[j-1])
+                    ? prev
+                    : Math.min(prev, dp[j-1], dp[j]) + 1;
+                prev = tmp;
+            }
+        }
+        return dp[m];
+    }
+
+    function scorePronunciation(heard, target) {
+        var a = toJamoSeq(heard.replace(/[\s.,!?]/g, ''));
+        var b = toJamoSeq(target.replace(/[\s.,!?]/g, ''));
+        if (b.length === 0) return 0;
+        var d = editDistance(a, b);
+        var sim = 1 - d / Math.max(a.length, b.length);
+        return Math.max(0, Math.min(1, sim));
+    }
+
+    function showEvalResult(resultEl, heard, sim, target) {
+        var tier, label, msg;
+        if (sim >= 0.9) { tier = 1; label = '🌟 すばらしい！'; msg = 'ほぼ完璧に発音できています。'; }
+        else if (sim >= 0.6) { tier = 2; label = '👍 いい感じ'; msg = '伝わる発音です。もう少しで完璧！'; }
+        else { tier = 3; label = '💪 もう一度'; msg = '手本をゆっくり聞いて、真似してみましょう。'; }
+        var pct = Math.round(sim * 100);
+        var heardDisplay = heard
+            ? '<div class="heard">聞こえた音: ' + escapeHtml(heard) + '</div>'
+            : '<div class="heard" style="color:var(--text-light);">音声が認識されませんでした</div>';
+        resultEl.innerHTML =
+            '<div class="eval-result tier-' + tier + '">' +
+                '<div class="tier-label">' + label + '</div>' +
+                '<div>一致度: <strong>' + pct + '%</strong></div>' +
+                heardDisplay +
+                '<div class="tier-detail">目標: ' + escapeHtml(target) + '<br>' + msg + '</div>' +
+            '</div>';
+    }
+
+    // ブラウザ内蔵 SpeechRecognition で評価 (APIキー不要)
+    function evaluateViaSpeechRecognition(target, resultEl) {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return Promise.reject(new Error('SR unavailable'));
+        return new Promise(function(resolve, reject) {
+            var rec;
+            try { rec = new SR(); } catch(e) { reject(e); return; }
+            rec.lang = 'ko-KR';
+            rec.interimResults = false;
+            rec.maxAlternatives = 3;
+            rec.continuous = false;
+            var settled = false;
+            var timer = setTimeout(function() {
+                if (settled) return;
+                settled = true;
+                try { rec.stop(); } catch(e) {}
+                reject(new Error('認識がタイムアウトしました。もう一度試してください。'));
+            }, 10000);
+
+            resultEl.innerHTML = '<div class="eval-loading"><span class="spin">🎙️</span> <strong>今、話してください…</strong></div>';
+
+            rec.onresult = function(e) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                var best = { heard: '', sim: 0 };
+                try {
+                    var alts = e.results[0];
+                    for (var i = 0; i < alts.length; i++) {
+                        var h = (alts[i].transcript || '').trim();
+                        var s = scorePronunciation(h, target);
+                        if (s > best.sim) { best.sim = s; best.heard = h; }
+                    }
+                } catch(err) {}
+                showEvalResult(resultEl, best.heard, best.sim, target);
+                resolve();
+            };
+            rec.onerror = function(e) {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                var msg = e.error === 'no-speech' ? '声が検出されませんでした。マイクに近づいて話してください。'
+                        : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。ブラウザ設定から許可してください。'
+                        : e.error === 'audio-capture' ? 'マイクが見つかりません。'
+                        : 'エラー: ' + e.error;
+                resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識失敗</div><div class="tier-detail">' + escapeHtml(msg) + '</div></div>';
+                resolve();
+            };
+            rec.onend = function() {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押してから話してください。</div></div>';
+                resolve();
+            };
+            try { rec.start(); } catch(err) {
+                settled = true;
+                clearTimeout(timer);
+                reject(err);
+            }
+        });
+    }
+
+    async function evaluateViaWhisper(target, resultEl, key) {
+        if (!recordedBlob) {
+            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音がありません</div><div class="tier-detail">先に🎙️で録音してください</div></div>';
+            return;
+        }
+        resultEl.innerHTML = '<div class="eval-loading"><span class="spin">⏳</span> 評価中…</div>';
+        try {
+            var form = new FormData();
+            var ext = (recordedBlob.type.indexOf('mp4') >= 0) ? 'm4a'
+                    : (recordedBlob.type.indexOf('mpeg') >= 0) ? 'mp3'
+                    : 'webm';
+            form.append('file', recordedBlob, 'rec.' + ext);
+            form.append('model', 'whisper-1');
+            form.append('language', 'ko');
+            form.append('response_format', 'json');
+            var resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + key },
+                body: form
+            });
+            if (!resp.ok) throw new Error('Whisper API ' + resp.status);
+            var data = await resp.json();
+            var heard = (data.text || '').trim();
+            var sim = scorePronunciation(heard, target);
+            showEvalResult(resultEl, heard, sim, target);
+        } catch(err) {
+            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">評価失敗</div><div class="tier-detail">' + escapeHtml(String(err.message || err)) + '</div></div>';
+        }
+    }
+
+    async function evaluatePronunciation() {
+        var resultEl = document.getElementById('evalResult');
+        if (!resultEl) return;
+        var target = currentPracticeTarget || '';
+        if (!target) {
+            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対象語なし</div></div>';
+            return;
+        }
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR) {
+            try {
+                await evaluateViaSpeechRecognition(target, resultEl);
+                return;
+            } catch(err) {
+                // SR 失敗時は Whisper にフォールバック
+                console.warn('SR failed, trying Whisper:', err);
+            }
+        }
+        var key = (APP_STATE.openaiApiKey || '').trim();
+        if (key) {
+            await evaluateViaWhisper(target, resultEl, key);
+            return;
+        }
+        resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対応していません</div><div class="tier-detail">このブラウザは音声認識をサポートしていません。Chrome または Safari をお試しください。</div></div>';
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 5. RENDERING
+    // ═══════════════════════════════════════════════════════
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+        });
+    }
+
+    function renderLetters() {
+        var container = document.getElementById('letters-container');
+        var mode = APP_STATE.subtab0;
+        var list = (mode === 'consonants') ? CONSONANTS : VOWELS;
+        var detail = null;
+        if (APP_STATE.selectedLetter) {
+            var found = list.find(function(x) { return x.h === APP_STATE.selectedLetter; });
+            if (found) detail = found;
+        }
+        if (!detail) detail = list[0];
+
+        var html = '';
+
+        html += '<div class="letter-detail">';
+        html += '<div class="big-hangul">' + detail.h + '</div>';
+        html += '<div class="info-row"><span class="label">名前</span><span class="value">' + detail.name + ' (' + detail.r + ')</span></div>';
+        html += '<div class="info-row"><span class="label">日本語音</span><span class="value">' + escapeHtml(detail.jp) + '</span></div>';
+        html += '<div class="info-row"><span class="label">例</span><span class="value" style="font-size:15px;">' + escapeHtml(detail.ex || detail.sample) + '</span></div>';
+        html += '<div class="tip">💡 ' + escapeHtml(detail.tip) + '</div>';
+        var ttsMain = detail.name || detail.sample || detail.h;
+        var ttsSample = detail.sample || detail.name || detail.h;
+        html += '<div class="audio-controls">';
+        html += '<button class="btn btn-primary tts-play" data-text="' + escapeHtml(ttsMain) + '">🔊 発音を聞く</button>';
+        if (detail.sample && detail.sample !== ttsMain) {
+            html += '<button class="btn btn-info tts-play" data-text="' + escapeHtml(ttsSample) + '">🔊 例単語</button>';
+        }
+        html += '<button class="btn btn-outline tts-play" data-text="' + escapeHtml(ttsMain) + '" data-speed="0.6">🐢 ゆっくり</button>';
+        html += '<button class="btn btn-success open-practice" data-text="' + escapeHtml(ttsMain) + '" data-label="' + escapeHtml(detail.h + ' - ' + detail.jp) + '">🎙️ 発音練習</button>';
+        html += '</div>';
+        html += '</div>';
+
+        html += '<div class="section-header">' + (mode === 'consonants' ? '子音一覧' : '母音一覧') + '<span class="small">タップで詳細</span></div>';
+
+        var key = detail ? detail.name : '';
+        detail && detail.name;
+        html += '<div class="letter-grid">';
+        list.forEach(function(item) {
+            var cls = 'letter-cell';
+            if (item.type === 'tense' || item.type === 'aspirated') cls += ' doubled';
+            html += '<div class="' + cls + '" data-letter="' + item.h + '">';
+            html += '<div class="hangul">' + item.h + '</div>';
+            html += '<div class="romaji">' + item.r + '</div>';
+            html += '<div class="jp">' + escapeHtml(item.jp.split('/')[0]) + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+
+        if (mode === 'consonants') {
+            html += '<div class="info-box"><strong>💡 子音の3系統:</strong><br>・<strong>平音</strong> (ㄱㄷㅂㅈ…) - 普通の音<br>・<strong>激音</strong> (ㅋㅌㅍㅊ) - 息を強く吐く<br>・<strong>濃音</strong> (ㄲㄸㅃㅆㅉ) - 喉を締めて詰まらせる<br>この3区別が韓国語の最大の壁。TTSで繰り返し聞いて感覚を掴もう。</div>';
+        } else {
+            html += '<div class="info-box"><strong>💡 母音のコツ:</strong><br>・<strong>ㅓ/ㅗ</strong>: どちらも「オ」だが、ㅓは口を縦開き・ㅗは唇を丸く<br>・<strong>ㅡ/ㅜ</strong>: どちらも「ウ」だが、ㅡは横に引く・ㅜは唇丸く<br>・<strong>ㅐ/ㅔ</strong>: 現代韓国語ではほぼ同じ音。</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function renderSyllables() {
+        var container = document.getElementById('syllables-container');
+        var mode = APP_STATE.subtab1;
+        var html = '';
+
+        if (mode === 'syllables') {
+            var renderTable = function(vowels, title) {
+                var h = '';
+                h += '<div class="section-header">' + title + '</div>';
+                h += '<div class="syllable-table" style="grid-template-columns: 36px repeat(' + vowels.length + ', 1fr);">';
+                h += '<div class="syl-cell syl-head"></div>';
+                vowels.forEach(function(v) {
+                    h += '<div class="syl-cell syl-head">' + v + '</div>';
+                });
+                SYLLABLE_CONSONANTS.forEach(function(c) {
+                    h += '<div class="syl-cell syl-head">' + c + '</div>';
+                    vowels.forEach(function(v) {
+                        var syl = buildSyllable(c, v);
+                        h += '<div class="syl-cell syl-play" data-text="' + syl + '">' + syl + '</div>';
+                    });
+                });
+                h += '</div>';
+                return h;
+            };
+
+            html += '<div class="info-box">子音 × 母音のマトリクス。マスをタップすると発音が聞けます。</div>';
+            html += renderTable(SYLLABLE_VOWELS_BASIC, '가나다 表 (基本母音 10)');
+            html += '<div style="height:14px;"></div>';
+            html += renderTable(SYLLABLE_VOWELS_COMPLEX, '가나다 表 (合成母音 11)');
+            html += '<div style="margin-top:16px;" class="info-box"><strong>💡 読み方:</strong><br>例えば ㄱ + ㅏ = 가 (カ/ガ)。縦列が子音、横列が母音。</div>';
+        } else {
+            html += '<div class="section-header">パッチム 7代表音<span class="small">末尾子音</span></div>';
+            html += '<div class="info-box"><strong>パッチムとは:</strong> 音節の末尾に来る子音。書かれる文字は多いが、実際の発音は下の<strong>7つの代表音</strong>だけに集約されます。</div>';
+            html += '<div class="batchim-grid">';
+            BATCHIMS.forEach(function(b) {
+                html += '<div class="batchim-card">';
+                html += '<div class="sound">' + b.sound + '</div>';
+                html += '<div class="letters">' + b.letters + '</div>';
+                html += '<div class="example">' + escapeHtml(b.jp) + '</div>';
+                b.examples.forEach(function(ex) {
+                    html += '<div style="font-size:13px;margin-top:4px;">';
+                    html += '<button class="tts-btn tts-play" data-text="' + escapeHtml(ex.w) + '" style="width:28px;height:28px;font-size:12px;vertical-align:middle;">🔊</button> ';
+                    html += '<strong>' + ex.w + '</strong> ' + ex.r + '<br>';
+                    html += '<span style="color:var(--text-light);font-size:11px;">' + ex.m + '</span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function renderRules() {
+        var container = document.getElementById('rules-container');
+        var html = '';
+        html += '<div class="section-header">発音変化ルール<span class="small">全8種</span></div>';
+        html += '<div class="info-box"><strong>⚠️ 重要:</strong> 韓国語は書かれた通りには読みません。下のルールを理解すれば、聞き取りと発音が飛躍的に上達します。各例をタップして実際の音を聞いてみてください。</div>';
+        RULES.forEach(function(r) {
+            html += '<div class="rule-card">';
+            html += '<div class="rule-header">';
+            html += '<div class="rule-title">' + r.title + '</div>';
+            html += '<div class="rule-desc">' + r.desc + '</div>';
+            html += '</div>';
+            html += '<div class="rule-body">';
+            html += '<div class="rule-formula">' + escapeHtml(r.formula) + '</div>';
+            r.examples.forEach(function(ex) {
+                html += '<div class="rule-example">';
+                html += '<div style="flex:1;">';
+                html += '<span class="spell">' + ex.spell + '</span>';
+                html += '<span class="arrow"> → </span>';
+                html += '<span class="sound">' + ex.sound + '</span>';
+                html += '<span class="jp"> ' + escapeHtml(ex.m) + '</span>';
+                html += '</div>';
+                html += '<button class="mini-tts tts-play" data-text="' + escapeHtml(ex.spell) + '">🔊</button>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '</div>';
+        });
+        container.innerHTML = html;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //   練習タブ (単語ドリル + 組立ゲーム)
+    // ═══════════════════════════════════════════════════════
+    function shuffle(arr) {
+        var a = arr.slice();
+        for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = a[i]; a[i] = a[j]; a[j] = t;
+        }
+        return a;
+    }
+
+    // ドリル用: 現在表示中の10語
+    let DRILL_WORDS = [];
+    // ゲーム用状態
+    const GAME_STATE = {
+        words: [],
+        index: 0,
+        correct: 0,
+        slots: [],        // [[cho,jung,jong], ...] (空文字で未入力)
+        distractors: [],
+        used: [],          // pool上の使用済みインデックス
+        finished: false
+    };
+
+    function reshuffleDrill() {
+        var src = (APP_STATE.practiceMode === 'cvc') ? PRACTICE_CVC : PRACTICE_CV;
+        DRILL_WORDS = shuffle(src).slice(0, 10);
+    }
+
+    function startGame() {
+        var src = (APP_STATE.gameMode === 'cvc') ? PRACTICE_CVC : PRACTICE_CV;
+        GAME_STATE.words = shuffle(src).slice(0, 10);
+        GAME_STATE.index = 0;
+        GAME_STATE.correct = 0;
+        GAME_STATE.finished = false;
+        loadGameWord();
+    }
+
+    function loadGameWord() {
+        var word = GAME_STATE.words[GAME_STATE.index];
+        if (!word) { GAME_STATE.finished = true; renderPractice(); return; }
+        var chars = word.w.split('');
+        // 各文字ごとに[cho, jung, jong]配列を準備 (初期値は空)
+        GAME_STATE.slots = chars.map(function(c) {
+            var parts = decomposeSyllable(c);
+            // 参考: parts[2] が '' の場合は終声無し → slotsに追加しない
+            return { target: parts, filled: ['', '', parts[2] ? '' : null] };
+        });
+        // 正解ジャモを集める
+        var required = [];
+        GAME_STATE.slots.forEach(function(s) {
+            required.push(s.target[0]);
+            required.push(s.target[1]);
+            if (s.target[2]) required.push(s.target[2]);
+        });
+        // ディストラクタを追加 (重複除去後の不足分+ランダム2個)
+        var allCho = CHO_ORDER.slice();
+        var allJung = JUNG_ORDER.slice();
+        var distractors = [];
+        for (var i = 0; i < 2; i++) {
+            var pool = i % 2 === 0 ? allCho : allJung;
+            for (var k = 0; k < 50; k++) {
+                var d = pool[Math.floor(Math.random() * pool.length)];
+                if (required.indexOf(d) === -1 && distractors.indexOf(d) === -1) {
+                    distractors.push(d);
+                    break;
+                }
+            }
+        }
+        GAME_STATE.pool = shuffle(required.concat(distractors));
+        GAME_STATE.used = GAME_STATE.pool.map(function() { return false; });
+    }
+
+    // 次に埋めるべきスロット位置を返す: {si, pos} または null
+    function nextSlotPos() {
+        for (var i = 0; i < GAME_STATE.slots.length; i++) {
+            var s = GAME_STATE.slots[i];
+            for (var p = 0; p < 3; p++) {
+                if (s.filled[p] === '') return { si: i, pos: p };
+            }
+        }
+        return null;
+    }
+
+    function placeJamo(poolIdx) {
+        if (GAME_STATE.used[poolIdx]) return;
+        var next = nextSlotPos();
+        if (!next) return;
+        var jamo = GAME_STATE.pool[poolIdx];
+        var expected = GAME_STATE.slots[next.si].target[next.pos];
+        if (jamo !== expected) {
+            // 誤タップは赤点滅で知らせて消費しない (重複jamoや位置間違いでスタックしない)
+            var chips = document.querySelectorAll('.jamo-chip');
+            var chip = chips[poolIdx];
+            if (chip) {
+                chip.classList.add('wrong');
+                setTimeout(function() { chip.classList.remove('wrong'); }, 450);
+            }
+            return;
+        }
+        GAME_STATE.slots[next.si].filled[next.pos] = jamo;
+        GAME_STATE.used[poolIdx] = true;
+        renderPractice();
+        if (!nextSlotPos()) checkAnswer();
+    }
+
+    function resetCurrentWord() {
+        GAME_STATE.slots.forEach(function(s) {
+            s.filled[0] = ''; s.filled[1] = '';
+            if (s.filled[2] !== null) s.filled[2] = '';
+        });
+        GAME_STATE.used = GAME_STATE.pool.map(function() { return false; });
+        renderPractice();
+    }
+
+    function checkAnswer() {
+        if (nextSlotPos()) return; // まだ埋まっていない
+        var allOk = GAME_STATE.slots.every(function(s) {
+            return s.filled[0] === s.target[0]
+                && s.filled[1] === s.target[1]
+                && (s.filled[2] || '') === (s.target[2] || '');
+        });
+        if (allOk) {
+            GAME_STATE.correct++;
+            var fb = document.getElementById('gameFeedback');
+            if (fb) { fb.className = 'game-feedback ok'; fb.textContent = '🎉 正解！'; }
+            // 正解の単語音を再生
+            var w = GAME_STATE.words[GAME_STATE.index];
+            speakText(w.w);
+            setTimeout(function() {
+                GAME_STATE.index++;
+                loadGameWord();
+                renderPractice();
+            }, 1200);
+        } else {
+            var fb = document.getElementById('gameFeedback');
+            if (fb) { fb.className = 'game-feedback ng'; fb.textContent = '❌ もう一度聞いてみよう'; }
+            document.querySelectorAll('.syl-block').forEach(function(el) {
+                el.classList.add('wrong');
+                setTimeout(function() { el.classList.remove('wrong'); }, 350);
+            });
+        }
+    }
+
+    function renderPractice() {
+        var container = document.getElementById('practice-container');
+        var html = '';
+        if (APP_STATE.subtabPractice === 'drill') {
+            if (DRILL_WORDS.length === 0) reshuffleDrill();
+            var mode = APP_STATE.practiceMode;
+            html += '<div class="mode-switch">';
+            html += '<button data-drill-mode="cv" class="' + (mode==='cv'?'active':'') + '">子音+母音</button>';
+            html += '<button data-drill-mode="cvc" class="' + (mode==='cvc'?'active':'') + '">+バッチム</button>';
+            html += '</div>';
+            html += '<div class="info-box" style="background:var(--primary-lighter);border-left-color:var(--primary);"><strong>🎯 単語ドリル:</strong> 🔊 を押して発音を聞き、真似して声に出してみよう。「やり直し」で別の10語に切り替わります。</div>';
+            html += '<div class="drill-grid">';
+            DRILL_WORDS.forEach(function(item) {
+                html += '<div class="drill-card tts-play" data-text="' + escapeHtml(item.w) + '">';
+                html += '<div class="word">' + item.w + '</div>';
+                html += '<div class="meaning">' + escapeHtml(item.m) + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '<div class="drill-actions">';
+            html += '<button id="drillReshuffle" class="primary">🔀 やり直し (新しい10語)</button>';
+            html += '</div>';
+        } else {
+            // 組立ゲーム
+            var gmode = APP_STATE.gameMode;
+            html += '<div class="mode-switch">';
+            html += '<button data-game-mode="cv" class="' + (gmode==='cv'?'active':'') + '">子音+母音</button>';
+            html += '<button data-game-mode="cvc" class="' + (gmode==='cvc'?'active':'') + '">+バッチム</button>';
+            html += '</div>';
+
+            if (GAME_STATE.words.length === 0) {
+                startGame();
+            }
+
+            if (GAME_STATE.finished) {
+                html += '<div class="game-score">';
+                html += '<div class="score-label">結果</div>';
+                html += '<div class="score-num">' + GAME_STATE.correct + ' / 10</div>';
+                html += '<button id="gameRestart" class="btn btn-primary" style="margin-top:12px;">もう一度</button>';
+                html += '</div>';
+            } else {
+                var word = GAME_STATE.words[GAME_STATE.index];
+                html += '<div class="info-box" style="background:var(--primary-lighter);border-left-color:var(--primary);"><strong>🎧 組立ゲーム:</strong> 音声を聞いて、正しいジャモ(字母)をタップして単語を組み立てよう。</div>';
+                html += '<div class="game-panel">';
+                html += '<div class="game-progress">問題 ' + (GAME_STATE.index + 1) + ' / 10　　正解 ' + GAME_STATE.correct + '</div>';
+                html += '<button class="game-audio-btn tts-play" data-text="' + escapeHtml(word.w) + '">🔊</button>';
+                html += '<div class="game-meaning">意味: ' + escapeHtml(word.m) + '</div>';
+
+                // スロット
+                var nextP = nextSlotPos();
+                html += '<div class="syl-slots">';
+                GAME_STATE.slots.forEach(function(s, si) {
+                    var done = s.filled[0] && s.filled[1] && (s.filled[2] === null || s.filled[2]);
+                    html += '<div class="syl-block ' + (done ? 'done' : '') + '">';
+                    for (var p = 0; p < 3; p++) {
+                        if (s.filled[p] === null) continue;
+                        var cur = (nextP && nextP.si === si && nextP.pos === p) ? 'current' : '';
+                        var fill = s.filled[p] ? 'filled' : '';
+                        html += '<div class="jamo-slot ' + fill + ' ' + cur + '">' + (s.filled[p] || '') + '</div>';
+                    }
+                    html += '</div>';
+                });
+                html += '</div>';
+
+                // プール
+                html += '<div class="jamo-pool">';
+                GAME_STATE.pool.forEach(function(j, idx) {
+                    var used = GAME_STATE.used[idx] ? 'used' : '';
+                    html += '<div class="jamo-chip ' + used + '" data-pool-idx="' + idx + '">' + j + '</div>';
+                });
+                html += '</div>';
+
+                html += '<div class="game-feedback" id="gameFeedback"></div>';
+                html += '<div class="game-controls">';
+                html += '<button class="btn-reset" id="gameReset">クリア</button>';
+                html += '</div>';
+                html += '</div>';
+            }
+        }
+        container.innerHTML = html;
+    }
+
+    function renderSettings() {
+        var container = document.getElementById('settings-container');
+        var masked = APP_STATE.openaiApiKey ? '••••••' + APP_STATE.openaiApiKey.slice(-4) : '未設定';
+        var html = '';
+
+        html += '<div class="card">';
+        html += '<h3 style="font-size:14px;margin-bottom:8px;">🔊 音声 (TTS)</h3>';
+        html += '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;line-height:1.5;"><strong>通常は不要です。</strong>APIキー未設定でも発音評価 (ブラウザ内蔵音声認識) と録音・再生は全て使えます。<br>OpenAI APIキーを登録すると、音声認識が未対応の端末でも Whisper で評価でき、TTS もより自然になります。</p>';
+        html += '<label style="font-size:12px;font-weight:600;">OpenAI APIキー</label>';
+        html += '<div style="display:flex;gap:8px;margin:6px 0 8px 0;">';
+        html += '<input type="password" id="apiKeyInput" placeholder="sk-..." value="">';
+        html += '<button class="btn btn-primary" id="saveApiKey">保存</button>';
+        html += '</div>';
+        html += '<p style="font-size:11px;color:var(--text-light);">現在: ' + masked + '</p>';
+
+        html += '<div style="margin-top:14px;">';
+        html += '<label style="font-size:12px;font-weight:600;">音声の種類</label>';
+        html += '<select id="ttsVoiceSelect" style="margin-top:4px;">';
+        ['alloy','echo','fable','onyx','nova','shimmer'].forEach(function(v) {
+            var labels = { alloy:'Alloy (中性)', echo:'Echo (男性)', fable:'Fable (落ち着いた)', onyx:'Onyx (低め男性)', nova:'Nova (女性・推奨)', shimmer:'Shimmer (柔らか女性)' };
+            html += '<option value="' + v + '"' + (APP_STATE.ttsVoice === v ? ' selected' : '') + '>' + labels[v] + '</option>';
+        });
+        html += '</select>';
+        html += '</div>';
+
+        html += '<div style="margin-top:14px;">';
+        html += '<label style="font-size:12px;font-weight:600;">再生速度: <span id="speedVal">' + (APP_STATE.ttsSpeed || 0.85) + 'x</span></label>';
+        html += '<input type="range" id="ttsSpeedRange" min="0.6" max="1.2" step="0.05" value="' + (APP_STATE.ttsSpeed || 0.85) + '">';
+        html += '</div>';
+
+        html += '<button class="btn btn-success tts-play" data-text="안녕하세요" style="width:100%;margin-top:14px;padding:12px;">🔊 テスト再生 (안녕하세요)</button>';
+        html += '</div>';
+
+        html += '<div class="card">';
+        html += '<h3 style="font-size:14px;margin-bottom:8px;">🎙️ マイク録音について</h3>';
+        html += '<p style="font-size:12px;color:var(--text-light);line-height:1.6;">録音ボタン(右下の🎙️または各カード)をタップするとブラウザがマイク許可を求めます。許可すると:<br>① 手本を聞く<br>② 自分の声を録音<br>③ 録音を再生して比較<br>の流れで発音を練習できます。</p>';
+        html += '</div>';
+
+        html += '<div class="card">';
+        html += '<h3 style="font-size:14px;margin-bottom:8px;">ℹ️ このアプリについて</h3>';
+        html += '<p style="font-size:12px;color:var(--text-light);line-height:1.6;">韓国語初学者向け、発音に特化した練習アプリです。<br>子音(19)、母音(21)、音節表、パッチム、発音変化8ルールを完全網羅。<br><br>データはすべてデバイス内に保存されます (localStorage)。</p>';
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        var keyInput = document.getElementById('apiKeyInput');
+        if (keyInput && APP_STATE.openaiApiKey) keyInput.value = APP_STATE.openaiApiKey;
+    }
+
+    function openPracticeModal(text, label) {
+        var modal = document.getElementById('practiceModal');
+        var content = document.getElementById('modalContent');
+        var safeText = escapeHtml(text || '안녕하세요');
+        var safeLabel = escapeHtml(label || text || '発音練習');
+        currentPracticeTarget = text || '안녕하세요';
+        recordedBlob = null;
+        recordedAudio = null;
+
+        content.innerHTML =
+            '<div style="text-align:center;padding:16px 0;">' +
+                '<div style="font-size:42px;font-weight:700;color:var(--primary-dark);margin-bottom:4px;">' + safeText + '</div>' +
+                '<div style="font-size:13px;color:var(--text-light);">' + safeLabel + '</div>' +
+            '</div>' +
+            '<div class="audio-controls">' +
+                '<button class="btn btn-primary tts-play" data-text="' + safeText + '">🔊 手本 (通常)</button>' +
+                '<button class="btn btn-outline tts-play" data-text="' + safeText + '" data-speed="0.6">🐢 ゆっくり</button>' +
+            '</div>' +
+            '<div class="record-panel">' +
+                '<div class="title">🎙️ あなたの発音を録音</div>' +
+                '<div class="record-center">' +
+                    '<button class="record-btn" id="recordBtn">🎙️</button>' +
+                    '<div class="record-status" id="recordStatus">ボタンをタップして開始</div>' +
+                '</div>' +
+                '<div class="record-compare">' +
+                    '<button class="btn btn-info tts-play" data-text="' + safeText + '">🔊 手本</button>' +
+                    '<button class="btn btn-success play-recorded-btn" id="playRecordedBtn" disabled>▶ 録音再生</button>' +
+                '</div>' +
+                '<button class="btn btn-primary" id="evalBtn" style="width:100%;margin-top:10px;">🎤 発音を評価 (タップして話す)</button>' +
+                '<div id="evalResult"></div>' +
+            '</div>';
+
+        modal.classList.add('show');
+    }
+
+    function closePracticeModal() {
+        document.getElementById('practiceModal').classList.remove('show');
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            try { mediaRecorder.stop(); } catch(e) {}
+        }
+        stopAllTTS();
+        if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
+    }
+
+    function switchTab(tabId) {
+        APP_STATE.currentTab = tabId;
+        saveState();
+        document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+        document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+        var target = document.getElementById('tab' + tabId);
+        if (target) target.classList.add('active');
+        var navItem = document.querySelector('.nav-item[data-tab="' + tabId + '"]');
+        if (navItem) navItem.classList.add('active');
+        document.getElementById('mainContainer').scrollTop = 0;
+
+        if (tabId === '0' || tabId === 0) renderLetters();
+        else if (tabId === '1' || tabId === 1) renderSyllables();
+        else if (tabId === '2' || tabId === 2) renderRules();
+        else if (tabId === 'practice') renderPractice();
+        else if (tabId === 'settings') renderSettings();
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 6. EVENT DELEGATION
+    // ═══════════════════════════════════════════════════════
+    document.addEventListener('click', function(e) {
+        var navItem = e.target.closest('.nav-item');
+        if (navItem) {
+            switchTab(navItem.dataset.tab);
+            return;
+        }
+
+        var subTab = e.target.closest('.sub-tab');
+        if (subTab) {
+            var key = subTab.dataset.subtab;
+            var parent = subTab.closest('.tab-content');
+            if (parent) {
+                parent.querySelectorAll('.sub-tab').forEach(function(s) { s.classList.remove('active'); });
+                subTab.classList.add('active');
+                if (parent.id === 'tab0') { APP_STATE.subtab0 = key; APP_STATE.selectedLetter = null; renderLetters(); }
+                if (parent.id === 'tab1') { APP_STATE.subtab1 = key; renderSyllables(); }
+                if (parent.id === 'tabpractice') { APP_STATE.subtabPractice = key; renderPractice(); }
+                saveState();
+            }
+            return;
+        }
+
+        var cell = e.target.closest('.letter-cell');
+        if (cell) {
+            APP_STATE.selectedLetter = cell.dataset.letter;
+            saveState();
+            renderLetters();
+            document.getElementById('mainContainer').scrollTop = 0;
+            var list = (APP_STATE.subtab0 === 'consonants') ? CONSONANTS : VOWELS;
+            var found = list.find(function(x) { return x.h === cell.dataset.letter; });
+            if (found) setTimeout(function() { speakText(found.name || found.sample || found.h); }, 150);
+            return;
+        }
+
+        var sylBtn = e.target.closest('.syl-play');
+        if (sylBtn) {
+            speakText(sylBtn.dataset.text, sylBtn);
+            return;
+        }
+
+        var tts = e.target.closest('.tts-play');
+        if (tts) {
+            e.preventDefault();
+            e.stopPropagation();
+            var speed = tts.dataset.speed ? parseFloat(tts.dataset.speed) : undefined;
+            speakText(tts.dataset.text, tts, speed);
+            return;
+        }
+
+        var practiceBtn = e.target.closest('.open-practice');
+        if (practiceBtn) {
+            openPracticeModal(practiceBtn.dataset.text, practiceBtn.dataset.label);
+            return;
+        }
+
+        var fab = e.target.closest('#fabPractice');
+        if (fab) {
+            var text = '안녕하세요';
+            var label = 'こんにちは';
+            if (APP_STATE.selectedLetter) {
+                var list = (APP_STATE.subtab0 === 'consonants') ? CONSONANTS : VOWELS;
+                var found = list.find(function(x) { return x.h === APP_STATE.selectedLetter; });
+                if (found) { text = found.name || found.sample || found.h; label = found.h + ' - ' + found.jp; }
+            }
+            openPracticeModal(text, label);
+            return;
+        }
+
+        var closeBtn = e.target.closest('#modalClose');
+        if (closeBtn) { closePracticeModal(); return; }
+
+        if (e.target.classList && e.target.classList.contains('modal-overlay')) {
+            closePracticeModal();
+            return;
+        }
+
+        var recBtn = e.target.closest('#recordBtn');
+        if (recBtn) {
+            var statusEl = document.getElementById('recordStatus');
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording(recBtn);
+            } else {
+                startRecording(statusEl, recBtn);
+            }
+            return;
+        }
+
+        var playRec = e.target.closest('#playRecordedBtn');
+        if (playRec) { playRecorded(); return; }
+
+        var evalBtn = e.target.closest('#evalBtn');
+        if (evalBtn) { evaluatePronunciation(); return; }
+
+        // 練習タブ - モード切替
+        var drillModeBtn = e.target.closest('[data-drill-mode]');
+        if (drillModeBtn) {
+            APP_STATE.practiceMode = drillModeBtn.dataset.drillMode;
+            reshuffleDrill();
+            saveState();
+            renderPractice();
+            return;
+        }
+        var gameModeBtn = e.target.closest('[data-game-mode]');
+        if (gameModeBtn) {
+            APP_STATE.gameMode = gameModeBtn.dataset.gameMode;
+            saveState();
+            startGame();
+            renderPractice();
+            return;
+        }
+        if (e.target.id === 'drillReshuffle') {
+            reshuffleDrill();
+            renderPractice();
+            return;
+        }
+        // 組立ゲーム - ジャモ選択
+        var chip = e.target.closest('.jamo-chip');
+        if (chip && !chip.classList.contains('used')) {
+            placeJamo(parseInt(chip.dataset.poolIdx, 10));
+            return;
+        }
+        if (e.target.id === 'gameReset') { resetCurrentWord(); return; }
+        if (e.target.id === 'gameCheck') { checkAnswer(); return; }
+        if (e.target.id === 'gameRestart') { startGame(); renderPractice(); return; }
+
+        var saveKey = e.target.closest('#saveApiKey');
+        if (saveKey) {
+            var inp = document.getElementById('apiKeyInput');
+            APP_STATE.openaiApiKey = inp.value.trim();
+            saveState();
+            renderSettings();
+            showToast('APIキーを保存しました');
+            return;
+        }
+    });
+
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'ttsVoiceSelect') {
+            APP_STATE.ttsVoice = e.target.value;
+            saveState();
+        }
+    });
+    document.addEventListener('input', function(e) {
+        if (e.target.id === 'ttsSpeedRange') {
+            APP_STATE.ttsSpeed = parseFloat(e.target.value);
+            var v = document.getElementById('speedVal');
+            if (v) v.textContent = APP_STATE.ttsSpeed.toFixed(2) + 'x';
+            saveState();
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // MASCOT: chima-jeogori girl (SVG + animations)
+    // ═══════════════════════════════════════════════════════
+    const MASCOT_SVG = '\
+<svg class="mascot" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">\
+  <!-- Music notes (appear when speaking) -->\
+  <g class="mascot-note">\
+    <path d="M96 42 l0 -16 l7 2 l0 14 z" fill="#30a46c"/>\
+    <circle cx="94" cy="44" r="3" fill="#30a46c"/>\
+  </g>\
+  <g class="mascot-note" style="animation-delay:.3s;">\
+    <path d="M18 50 l0 -12 l6 1.5 l0 10.5 z" fill="#f5a524"/>\
+    <circle cx="16" cy="52" r="2.5" fill="#f5a524"/>\
+  </g>\
+  \
+  <!-- Head (circle outline) -->\
+  <circle cx="60" cy="40" r="26" fill="#ffffff" stroke="#5a5a5a" stroke-width="2.6"/>\
+  \
+  <!-- Hair bangs mark (triangle on forehead) -->\
+  <path d="M46 28 L60 20 L74 28" fill="none" stroke="#5a5a5a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>\
+  \
+  <!-- Eyes (filled ovals) -->\
+  <ellipse class="mascot-eye" cx="50" cy="40" rx="2.2" ry="3.6" fill="#2a2a2a"/>\
+  <ellipse class="mascot-eye" cx="70" cy="40" rx="2.2" ry="3.6" fill="#2a2a2a"/>\
+  \
+  <!-- Cheeks (pink blush) -->\
+  <circle class="mascot-cheek" cx="44" cy="48" r="4.2" fill="#f2acba" opacity="0.85"/>\
+  <circle class="mascot-cheek" cx="76" cy="48" r="4.2" fill="#f2acba" opacity="0.85"/>\
+  \
+  <!-- Smile -->\
+  <g style="transform-origin: 60px 52px; transform-box: fill-box;">\
+    <path class="mascot-mouth" d="M52 50 Q60 58 68 50" fill="none" stroke="#2a2a2a" stroke-width="2.2" stroke-linecap="round"/>\
+  </g>\
+  \
+  <!-- Neck (two thin lines) -->\
+  <path d="M55 66 L52 74" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round" fill="none"/>\
+  <path d="M65 66 L68 74" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round" fill="none"/>\
+  \
+  <!-- Dress (triangle with v-neck) -->\
+  <path d="M52 74 L60 82 L68 74 L88 112 L32 112 Z" fill="#ffffff" stroke="#5a5a5a" stroke-width="2.6" stroke-linejoin="round"/>\
+  \
+  <!-- Arms (thin curved) -->\
+  <path d="M38 84 Q28 104 30 122" fill="none" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round"/>\
+  <path d="M82 84 Q92 104 90 122" fill="none" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round"/>\
+  \
+  <!-- Legs -->\
+  <path d="M48 112 L46 142" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round" fill="none"/>\
+  <path d="M72 112 L74 142" stroke="#5a5a5a" stroke-width="2.2" stroke-linecap="round" fill="none"/>\
+  \
+  <!-- Feet (ovals) -->\
+  <ellipse cx="42" cy="146" rx="8" ry="3.2" fill="#5a5a5a"/>\
+  <ellipse cx="78" cy="146" rx="8" ry="3.2" fill="#5a5a5a"/>\
+</svg>\
+';
+
+    function insertMascot(el) {
+        if (el) el.innerHTML = MASCOT_SVG;
+    }
+
+    function setMascotSpeaking(on) {
+        document.querySelectorAll('.mascot').forEach(function(m) {
+            if (on) m.classList.add('speaking');
+            else m.classList.remove('speaking');
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 7. INIT
+    // ═══════════════════════════════════════════════════════
+    loadState();
+    insertMascot(document.getElementById('mascotHeader'));
+    loadAudioManifest().then(function() {
+        renderLetters();
+        renderSyllables();
+        renderRules();
+        renderPractice();
+        renderSettings();
+        if (APP_STATE.currentTab && APP_STATE.currentTab !== 0) {
+            switchTab(APP_STATE.currentTab);
+        }
+    });
+    </script>
+</body>
+</html>
