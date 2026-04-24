@@ -1766,9 +1766,12 @@
     // ═══════════════════════════════════════════════════════
     // 4. 発音評価 (Whisper優先 / SR フォールバック、3段階自動採点)
     // ═══════════════════════════════════════════════════════
-    // Cloudflare Worker プロキシ URL (デプロイ後にここに貼る)。
-    // 設定されていれば学生は OpenAI キー不要。未設定なら個別キー or SR にフォールバック。
-    const WHISPER_PROXY_URL = 'https://korean-pron-whisper.korean-pronun.workers.dev';
+    // Cloudflare Worker プロキシ URL。通常は空 (無料運用 = Web SpeechRecognition)。
+    // URL に ?whisper=1 を付けてアクセスした時だけ Whisper を有効化する。
+    // 公式テストなど高精度が必要な時だけ切り替える運用。
+    const WHISPER_PROXY_URL = (new URLSearchParams(location.search)).get('whisper') === '1'
+        ? 'https://korean-pron-whisper.korean-pronun.workers.dev'
+        : '';
     let activeSR = null;
     let activeRecorder = null;
     let activeStream = null;
