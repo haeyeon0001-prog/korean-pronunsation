@@ -235,33 +235,14 @@
             position: relative;
             background: white;
             border-radius: 12px;
-            padding: 10px 6px 22px 6px;
+            padding: 10px 6px;
             text-align: center;
             border: 0.5px solid var(--border);
             box-shadow: var(--shadow-sm);
             cursor: pointer;
-            transition: transform 0.15s ease, background 0.15s ease;
+            transition: transform 0.12s ease;
         }
-        .letter-cell:active { transform: scale(0.94); background: var(--primary-lighter); }
-        .letter-mic {
-            position: absolute;
-            bottom: 3px;
-            right: 3px;
-            width: 22px;
-            height: 22px;
-            padding: 0;
-            font-size: 12px;
-            border: none;
-            border-radius: 50%;
-            background: var(--success, #27ae60);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        .letter-mic:active { transform: scale(0.88); }
+        .letter-cell:active { transform: scale(0.94); }
         .letter-cell.doubled { background: var(--primary-lighter); }
         .letter-cell .hangul {
             font-size: 30px;
@@ -1513,7 +1494,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'jian-v2-2026-04-25';
+    var AUDIO_VERSION = 'jian-v3-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1604,7 +1585,10 @@
     function speakText(text, btn, speedOverride) {
         stopAllTTS();
         var resetBtn = null;
-        if (btn) {
+        // 単純なボタン (.btn クラスや <button>) のときだけ視覚変更する。
+        // 字母セルなど複数子要素を持つ要素は触らない (textContent 書き換えで構造が壊れる)。
+        var isSimpleBtn = btn && (btn.tagName === 'BUTTON' || btn.classList.contains('btn'));
+        if (btn && isSimpleBtn) {
             btn.dataset.origText = btn.dataset.origText || btn.textContent;
             btn.style.background = 'var(--primary)';
             btn.style.color = 'white';
@@ -1721,11 +1705,84 @@
     let recordedBlob = null;
     let recordedAudio = null;
     let recordStream = null;
+    let liveRecognizer = null;     // SpeechRecognition during recording
+    let liveAlternatives = [];     // transcripts captured during recording
+    let recognizerEnded = false;
+    let recorderStopped = false;
+
+    function tryFinalizeEvaluation() {
+        if (!recorderStopped || !recognizerEnded) return;
+        var resultEl = document.getElementById('evalResult');
+        if (!resultEl) return;
+        var target = currentPracticeTarget || '';
+        if (liveAlternatives.length > 0 && target) {
+            var best = { sim: 0, heard: '' };
+            liveAlternatives.forEach(function(h) {
+                var s = scorePronunciation(h, target);
+                if (s > best.sim) { best.sim = s; best.heard = h; }
+            });
+            showEvalResult(resultEl, best.heard, best.sim, target);
+            return;
+        }
+        var key = (APP_STATE.openaiApiKey || '').trim();
+        if (key && recordedBlob) {
+            evaluateViaWhisper(target, resultEl, key);
+            return;
+        }
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対応していません</div><div class="tier-detail">このブラウザは音声認識に対応していません。Chrome または Safari をお試しください。</div></div>';
+        } else {
+            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識できませんでした</div><div class="tier-detail">もう一度マイクに近づいてハッキリと発音してください。</div></div>';
+        }
+    }
+
+    function startLiveRecognition() {
+        liveAlternatives = [];
+        recognizerEnded = false;
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { recognizerEnded = true; return; }
+        try {
+            liveRecognizer = new SR();
+            liveRecognizer.lang = 'ko-KR';
+            liveRecognizer.interimResults = false;
+            liveRecognizer.maxAlternatives = 3;
+            liveRecognizer.continuous = false;
+            liveRecognizer.onresult = function(e) {
+                try {
+                    var alts = e.results[0];
+                    for (var i = 0; i < alts.length; i++) {
+                        var h = (alts[i].transcript || '').trim();
+                        if (h) liveAlternatives.push(h);
+                    }
+                } catch(err) {}
+            };
+            liveRecognizer.onerror = function() {};
+            liveRecognizer.onend = function() {
+                recognizerEnded = true;
+                tryFinalizeEvaluation();
+            };
+            liveRecognizer.start();
+        } catch(e) {
+            recognizerEnded = true;
+        }
+    }
+
+    function stopLiveRecognition() {
+        if (liveRecognizer) {
+            try { liveRecognizer.stop(); } catch(e) {}
+        } else {
+            recognizerEnded = true;
+        }
+    }
 
     async function startRecording(statusEl, btnEl) {
         try {
             recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             recordedChunks = [];
+            recorderStopped = false;
+            recognizerEnded = false;
+            liveAlternatives = [];
             var mime = '';
             var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/mpeg'];
             for (var i = 0; i < candidates.length; i++) {
@@ -1750,9 +1807,11 @@
                 if (playBtn) playBtn.disabled = false;
                 var resultEl = document.getElementById('evalResult');
                 if (resultEl) resultEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-light);font-size:13px;">評価中…</div>';
-                setTimeout(function() { evaluatePronunciation(); }, 200);
+                recorderStopped = true;
+                tryFinalizeEvaluation();
             };
             mediaRecorder.start();
+            startLiveRecognition();
             if (btnEl) btnEl.classList.add('recording');
             if (btnEl) btnEl.textContent = '■';
             if (statusEl) statusEl.textContent = '● 録音中… もう一度タップで停止';
@@ -1768,6 +1827,7 @@
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
+        stopLiveRecognition();
         if (btnEl) btnEl.classList.remove('recording');
         if (btnEl) btnEl.textContent = '🎙️';
     }
@@ -1984,51 +2044,25 @@
         var container = document.getElementById('letters-container');
         var mode = APP_STATE.subtab0;
         var list = (mode === 'consonants') ? CONSONANTS : VOWELS;
-        var detail = null;
-        if (APP_STATE.selectedLetter) {
-            var found = list.find(function(x) { return x.h === APP_STATE.selectedLetter; });
-            if (found) detail = found;
-        }
-        if (!detail) detail = list[0];
 
         var html = '';
-
-        html += '<div class="letter-detail">';
-        html += '<div class="big-hangul">' + detail.h + '</div>';
-        html += '<div class="info-row"><span class="label">名前</span><span class="value">' + detail.name + ' (' + detail.r + ')</span></div>';
-        html += '<div class="info-row"><span class="label">日本語音</span><span class="value">' + escapeHtml(detail.jp) + '</span></div>';
-        html += '<div class="info-row"><span class="label">例</span><span class="value" style="font-size:15px;">' + escapeHtml(detail.ex || detail.sample) + '</span></div>';
-        html += '<div class="tip">💡 ' + escapeHtml(detail.tip) + '</div>';
-        var ttsMain = detail.name || detail.sample || detail.h;
-        var ttsSample = detail.sample || detail.name || detail.h;
-        html += '<div class="audio-controls">';
-        html += '<button class="btn btn-primary tts-play" data-text="' + escapeHtml(ttsMain) + '">🔊 発音を聞く</button>';
-        if (detail.sample && detail.sample !== ttsMain) {
-            html += '<button class="btn btn-info tts-play" data-text="' + escapeHtml(ttsSample) + '">🔊 例単語</button>';
-        }
-        html += '<button class="btn btn-success open-practice" data-text="' + escapeHtml(ttsMain) + '" data-label="' + escapeHtml(detail.h + ' - ' + detail.jp) + '">🎙️ 発音練習</button>';
-        html += '</div>';
-        html += '</div>';
-
-        html += '<div class="section-header">' + (mode === 'consonants' ? '子音一覧' : '母音一覧') + '<span class="small">タップで発音 / 🎙️で練習</span></div>';
+        html += '<div class="section-header">' + (mode === 'consonants' ? '子音一覧' : '母音一覧') + '<span class="small">タップで発音</span></div>';
 
         html += '<div class="letter-grid">';
         list.forEach(function(item) {
             var cls = 'letter-cell';
             if (item.type === 'tense' || item.type === 'aspirated') cls += ' doubled';
             var ttsName = item.name || item.sample || item.h;
-            var label = item.h + ' - ' + item.jp;
             html += '<div class="' + cls + '" data-letter="' + item.h + '" data-tts="' + escapeHtml(ttsName) + '">';
             html += '<div class="hangul">' + item.h + '</div>';
             html += '<div class="romaji">' + item.r + '</div>';
             html += '<div class="jp">' + escapeHtml(item.jp.split('/')[0]) + '</div>';
-            html += '<button class="letter-mic open-practice" data-text="' + escapeHtml(ttsName) + '" data-label="' + escapeHtml(label) + '" aria-label="発音練習">🎙️</button>';
             html += '</div>';
         });
         html += '</div>';
 
         if (mode === 'consonants') {
-            html += '<div class="info-box"><strong>💡 子音の3系統:</strong><br>・<strong>平音</strong> (ㄱㄷㅂㅈ…) - 普通の音<br>・<strong>激音</strong> (ㅋㅌㅍㅊ) - 息を強く吐く<br>・<strong>濃音</strong> (ㄲㄸㅃㅆㅉ) - 喉を締めて詰まらせる<br>この3区別が韓国語の最大の壁。TTSで繰り返し聞いて感覚を掴もう。</div>';
+            html += '<div class="info-box"><strong>💡 子音の3系統:</strong><br>・<strong>平音</strong> (ㄱㄷㅂㅈ…) - 普通の音<br>・<strong>激音</strong> (ㅋㅌㅍㅊ) - 息を強く吐く<br>・<strong>濃音</strong> (ㄲㄸㅃㅆㅉ) - 喉を締めて詰まらせる<br>この3区別が韓国語の最大の壁。繰り返し聞いて感覚を掴もう。</div>';
         } else {
             html += '<div class="info-box"><strong>💡 母音のコツ:</strong><br>・<strong>ㅓ/ㅗ</strong>: どちらも「オ」だが、ㅓは口を縦開き・ㅗは唇を丸く<br>・<strong>ㅡ/ㅜ</strong>: どちらも「ウ」だが、ㅡは横に引く・ㅜは唇丸く<br>・<strong>ㅐ/ㅔ</strong>: 現代韓国語ではほぼ同じ音。</div>';
         }
@@ -2349,40 +2383,11 @@
 
     function renderSettings() {
         var container = document.getElementById('settings-container');
-        var masked = APP_STATE.openaiApiKey ? '••••••' + APP_STATE.openaiApiKey.slice(-4) : '未設定';
         var html = '';
 
         html += '<div class="card">';
-        html += '<h3 style="font-size:14px;margin-bottom:8px;">🔊 音声 (TTS)</h3>';
-        html += '<p style="font-size:12px;color:var(--text-light);margin-bottom:12px;line-height:1.5;"><strong>通常は不要です。</strong>APIキー未設定でも発音評価 (ブラウザ内蔵音声認識) と録音・再生は全て使えます。<br>OpenAI APIキーを登録すると、音声認識が未対応の端末でも Whisper で評価でき、TTS もより自然になります。</p>';
-        html += '<label style="font-size:12px;font-weight:600;">OpenAI APIキー</label>';
-        html += '<div style="display:flex;gap:8px;margin:6px 0 8px 0;">';
-        html += '<input type="password" id="apiKeyInput" placeholder="sk-..." value="">';
-        html += '<button class="btn btn-primary" id="saveApiKey">保存</button>';
-        html += '</div>';
-        html += '<p style="font-size:11px;color:var(--text-light);">現在: ' + masked + '</p>';
-
-        html += '<div style="margin-top:14px;">';
-        html += '<label style="font-size:12px;font-weight:600;">音声の種類</label>';
-        html += '<select id="ttsVoiceSelect" style="margin-top:4px;">';
-        ['alloy','echo','fable','onyx','nova','shimmer'].forEach(function(v) {
-            var labels = { alloy:'Alloy (中性)', echo:'Echo (男性)', fable:'Fable (落ち着いた)', onyx:'Onyx (低め男性)', nova:'Nova (女性・推奨)', shimmer:'Shimmer (柔らか女性)' };
-            html += '<option value="' + v + '"' + (APP_STATE.ttsVoice === v ? ' selected' : '') + '>' + labels[v] + '</option>';
-        });
-        html += '</select>';
-        html += '</div>';
-
-        html += '<div style="margin-top:14px;">';
-        html += '<label style="font-size:12px;font-weight:600;">再生速度: <span id="speedVal">' + (APP_STATE.ttsSpeed || 0.85) + 'x</span></label>';
-        html += '<input type="range" id="ttsSpeedRange" min="0.6" max="1.2" step="0.05" value="' + (APP_STATE.ttsSpeed || 0.85) + '">';
-        html += '</div>';
-
-        html += '<button class="btn btn-success tts-play" data-text="안녕하세요" style="width:100%;margin-top:14px;padding:12px;">🔊 テスト再生 (안녕하세요)</button>';
-        html += '</div>';
-
-        html += '<div class="card">';
         html += '<h3 style="font-size:14px;margin-bottom:8px;">🎙️ マイク録音について</h3>';
-        html += '<p style="font-size:12px;color:var(--text-light);line-height:1.6;">録音ボタン(右下の🎙️または各カード)をタップするとブラウザがマイク許可を求めます。許可すると:<br>① 手本を聞く<br>② 自分の声を録音<br>③ 録音を再生して比較<br>の流れで発音を練習できます。</p>';
+        html += '<p style="font-size:12px;color:var(--text-light);line-height:1.6;">録音ボタンをタップするとブラウザがマイク許可を求めます。許可すると:<br>① お手本を聞く<br>② 自分の声を録音<br>③ 録音を再生して比較<br>④ 自動で発音評価<br>の流れで練習できます。</p>';
         html += '</div>';
 
         html += '<div class="card">';
@@ -2391,9 +2396,6 @@
         html += '</div>';
 
         container.innerHTML = html;
-
-        var keyInput = document.getElementById('apiKeyInput');
-        if (keyInput && APP_STATE.openaiApiKey) keyInput.value = APP_STATE.openaiApiKey;
     }
 
     function openPracticeModal(text, label) {
@@ -2404,6 +2406,9 @@
         currentPracticeTarget = text || '안녕하세요';
         recordedBlob = null;
         recordedAudio = null;
+        liveAlternatives = [];
+        recognizerEnded = false;
+        recorderStopped = false;
 
         content.innerHTML =
             '<div style="text-align:center;padding:16px 0;">' +
@@ -2430,6 +2435,7 @@
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             try { mediaRecorder.stop(); } catch(e) {}
         }
+        if (liveRecognizer) { try { liveRecognizer.stop(); } catch(e) {} }
         stopAllTTS();
         if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
     }
@@ -2474,14 +2480,6 @@
                 if (parent.id === 'tabpractice') { APP_STATE.subtabPractice = key; renderPractice(); }
                 saveState();
             }
-            return;
-        }
-
-        var micBtn = e.target.closest('.letter-mic');
-        if (micBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            openPracticeModal(micBtn.dataset.text, micBtn.dataset.label);
             return;
         }
 

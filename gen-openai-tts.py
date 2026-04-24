@@ -15,13 +15,13 @@ import urllib.request
 import urllib.error
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(ROOT, "app", "audio")
+OUT_DIR = os.path.join(ROOT, "docs", "audio")
 MANIFEST = os.path.join(OUT_DIR, "manifest.json")
 SRC_SH = os.path.join(ROOT, "gen-audio.sh")
 KEY_FILE = "/tmp/key.txt"
 
-MODEL = "tts-1"
-VOICE = "nova"
+MODEL = "tts-1-hd"
+VOICE = "onyx"
 SPEED = 0.9
 FMT = "mp3"
 

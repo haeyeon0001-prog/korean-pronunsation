@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# macOS `say -v Yuna` (ネイティブ韓国語 TTS) で音声生成 → AAC/.m4a 変換
-# 出力: app/audio/<md5>.m4a と manifest.json
+# macOS `say -v 'Jian (Premium)'` (ネイティブ韓国語 TTS) で音声生成 → AAC/.m4a 変換
+# 出力: docs/audio/<md5>.m4a と manifest.json
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT_DIR="$SCRIPT_DIR/app/audio"
+OUT_DIR="$SCRIPT_DIR/docs/audio"
 MANIFEST="$OUT_DIR/manifest.json"
 mkdir -p "$OUT_DIR"
 
@@ -82,8 +82,8 @@ for TEXT in "${TEXTS[@]}"; do
 
     printf "\r  [%3d/%3d] %s              " "$IDX" "$TOTAL" "$TEXT"
 
-    # Yuna (韓国語ネイティブ) で AIFF 出力 → AAC m4a 変換
-    if ! say -v Yuna -r 160 -o "$AIFF" "$TEXT"; then
+    # Jian Premium (韓国語ネイティブ) で AIFF 出力 → AAC m4a 変換
+    if ! say -v 'Jian (Premium)' -r 160 -o "$AIFF" "$TEXT"; then
         echo ""
         echo "  警告: $TEXT の音声合成に失敗"
         rm -f "$AIFF"
