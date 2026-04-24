@@ -1558,27 +1558,32 @@
     });
 
     function playViaHtml5(fname, btn, speedOverride, resetBtn) {
-        if (primaryAudio) { try { primaryAudio.pause(); primaryAudio.src = ''; } catch(e) {} }
+        if (currentTTSAudio) { try { currentTTSAudio.pause(); } catch(e) {} }
         var a = new Audio('audio/' + fname);
-        a.preload = 'auto';
         a.playsInline = true;
-        a.playbackRate = speedOverride || 1.0;
+        if (speedOverride) a.playbackRate = speedOverride;
         a.onplay = function() { setMascotSpeaking(true); };
-        a.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-        a.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-        primaryAudio = a;
+        a.onended = function() { setMascotSpeaking(false); currentTTSAudio = null; if (resetBtn) resetBtn(); };
+        a.onerror = function() {
+            setMascotSpeaking(false);
+            currentTTSAudio = null;
+            if (resetBtn) resetBtn();
+            showToast('お手本音声を読み込めませんでした', true);
+        };
         currentTTSAudio = a;
         var p = a.play();
         if (p && p.catch) p.catch(function(err) {
             console.warn('HTML5 Audio playback failed:', err);
             setMascotSpeaking(false);
+            currentTTSAudio = null;
             if (resetBtn) resetBtn();
+            showToast('お手本再生に失敗: ' + (err && err.name ? err.name : 'Unknown'), true);
         });
         return true;
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'jian-v5-2026-04-25';
+    var AUDIO_VERSION = 'jian-v6-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1743,94 +1748,87 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // 4. RECORDING (MediaRecorder API)
+    // 4. 発音評価 (SpeechRecognition による 3段階自動採点)
     // ═══════════════════════════════════════════════════════
-    let mediaRecorder = null;
-    let recordedChunks = [];
-    let recordedBlob = null;
-    let recordedAudio = null;
-    let recordStream = null;
+    let activeSR = null;
 
-    function finalizeEvaluation() {
+    function startEvaluation(statusEl, btnEl) {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            if (statusEl) statusEl.textContent = '⚠️ このブラウザは音声認識に対応していません';
+            showToast('Chrome / Safari をお使いください', true);
+            return;
+        }
+        if (activeSR) { try { activeSR.stop(); } catch(e) {} activeSR = null; }
+        stopAllTTS();
         var resultEl = document.getElementById('evalResult');
-        if (!resultEl) return;
+        if (resultEl) resultEl.innerHTML = '';
         var target = currentPracticeTarget || '';
-        var key = (APP_STATE.openaiApiKey || '').trim();
-        if (key && recordedBlob) {
-            evaluateViaWhisper(target, resultEl, key);
+        var rec;
+        try { rec = new SR(); } catch(err) {
+            if (statusEl) statusEl.textContent = '⚠️ 認識エンジンを開始できません';
             return;
         }
-        resultEl.innerHTML = '<div class="eval-result tier-2"><div class="tier-label">録音できました 🎉</div><div class="tier-detail">「🔊 お手本」と「▶ 自分の声」を交互に聞き比べてみましょう。違いを感じたらもう一度挑戦！</div></div>';
-    }
+        rec.lang = 'ko-KR';
+        rec.interimResults = false;
+        rec.maxAlternatives = 5;
+        rec.continuous = false;
+        activeSR = rec;
+        var settled = false;
 
-    async function startRecording(statusEl, btnEl) {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            if (statusEl) statusEl.textContent = '⚠️ このブラウザは録音に対応していません';
-            showToast('録音 API 非対応', true);
-            return;
-        }
-        if (typeof MediaRecorder === 'undefined') {
-            if (statusEl) statusEl.textContent = '⚠️ MediaRecorder 非対応';
-            showToast('録音 API 非対応', true);
-            return;
-        }
-        try {
-            recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            recordedChunks = [];
-            var mime = '';
-            var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/mpeg'];
-            for (var i = 0; i < candidates.length; i++) {
-                if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
-                    mime = candidates[i]; break;
-                }
-            }
-            mediaRecorder = mime ? new MediaRecorder(recordStream, { mimeType: mime }) : new MediaRecorder(recordStream);
-            mediaRecorder.ondataavailable = function(e) {
-                if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-            };
-            mediaRecorder.onstop = function() {
-                recordedBlob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
-                recordedAudio = new Audio(URL.createObjectURL(recordedBlob));
-                if (statusEl) statusEl.textContent = '✓ 録音完了 (' + Math.round(recordedBlob.size/1024) + 'KB)';
-                if (recordStream) {
-                    recordStream.getTracks().forEach(function(t) { t.stop(); });
-                    recordStream = null;
-                }
-                var playBtn = document.querySelector('.play-recorded-btn');
-                if (playBtn) playBtn.disabled = false;
-                var resultEl = document.getElementById('evalResult');
-                if (resultEl) resultEl.innerHTML = '';
-                finalizeEvaluation();
-            };
-            mediaRecorder.start();
-            if (btnEl) btnEl.classList.add('recording');
-            if (btnEl) btnEl.textContent = '■';
-            if (statusEl) statusEl.textContent = '● 録音中… もう一度タップで停止';
-        } catch(err) {
-            console.error(err);
-            var msg = (err && err.name === 'NotAllowedError')
-                ? 'マイクへのアクセスが拒否されました。設定でマイク許可を確認してください。'
-                : 'マイクを開始できませんでした: ' + (err && err.name ? err.name : 'Unknown');
-            showToast(msg, true);
-            if (statusEl) statusEl.textContent = '⚠️ ' + msg;
+        function setIdle() {
             if (btnEl) { btnEl.classList.remove('recording'); btnEl.textContent = '🎙️'; }
         }
-    }
-
-    function stopRecording(btnEl) {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            mediaRecorder.stop();
+        function setActive() {
+            if (btnEl) { btnEl.classList.add('recording'); btnEl.textContent = '■'; }
         }
-        if (btnEl) btnEl.classList.remove('recording');
-        if (btnEl) btnEl.textContent = '🎙️';
+
+        rec.onresult = function(e) {
+            if (settled) return;
+            settled = true;
+            var best = { heard: '', sim: 0 };
+            try {
+                var alts = e.results[0];
+                for (var i = 0; i < alts.length; i++) {
+                    var h = (alts[i].transcript || '').trim();
+                    var s = scorePronunciation(h, target);
+                    if (s > best.sim) { best.sim = s; best.heard = h; }
+                }
+            } catch(err) {}
+            if (resultEl) showEvalResult(resultEl, best.heard, best.sim, target);
+            if (statusEl) statusEl.textContent = '';
+        };
+        rec.onerror = function(e) {
+            if (settled) return;
+            settled = true;
+            var msg = e.error === 'no-speech' ? '声が検出されませんでした。もう一度ボタンを押して話してください。'
+                    : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。'
+                    : e.error === 'audio-capture' ? 'マイクが見つかりません。'
+                    : 'エラー: ' + e.error;
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識失敗</div><div class="tier-detail">' + escapeHtml(msg) + '</div></div>';
+            if (statusEl) statusEl.textContent = '';
+        };
+        rec.onend = function() {
+            activeSR = null;
+            setIdle();
+            if (!settled) {
+                settled = true;
+                if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押してから話してください。</div></div>';
+                if (statusEl) statusEl.textContent = '';
+            }
+        };
+        try {
+            rec.start();
+            setActive();
+            if (statusEl) statusEl.textContent = '● 話してください…';
+        } catch(err) {
+            activeSR = null;
+            if (statusEl) statusEl.textContent = '⚠️ ' + (err && err.name ? err.name : 'エラー');
+        }
     }
 
-    function playRecorded() {
-        if (!recordedAudio) return;
-        stopAllTTS();
-        try { recordedAudio.currentTime = 0; } catch(e) {}
-        recordedAudio.play();
+    function stopEvaluation() {
+        if (activeSR) { try { activeSR.stop(); } catch(e) {} }
     }
 
     // ═══════════════════════════════════════════════════════
@@ -1903,125 +1901,6 @@
                 heardDisplay +
                 '<div class="tier-detail">目標: ' + escapeHtml(target) + '<br>' + msg + '</div>' +
             '</div>';
-    }
-
-    // ブラウザ内蔵 SpeechRecognition で評価 (APIキー不要)
-    function evaluateViaSpeechRecognition(target, resultEl) {
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return Promise.reject(new Error('SR unavailable'));
-        return new Promise(function(resolve, reject) {
-            var rec;
-            try { rec = new SR(); } catch(e) { reject(e); return; }
-            rec.lang = 'ko-KR';
-            rec.interimResults = false;
-            rec.maxAlternatives = 3;
-            rec.continuous = false;
-            var settled = false;
-            var timer = setTimeout(function() {
-                if (settled) return;
-                settled = true;
-                try { rec.stop(); } catch(e) {}
-                reject(new Error('認識がタイムアウトしました。もう一度試してください。'));
-            }, 10000);
-
-            resultEl.innerHTML = '<div class="eval-loading"><span class="spin">🎙️</span> <strong>今、話してください…</strong></div>';
-
-            rec.onresult = function(e) {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                var best = { heard: '', sim: 0 };
-                try {
-                    var alts = e.results[0];
-                    for (var i = 0; i < alts.length; i++) {
-                        var h = (alts[i].transcript || '').trim();
-                        var s = scorePronunciation(h, target);
-                        if (s > best.sim) { best.sim = s; best.heard = h; }
-                    }
-                } catch(err) {}
-                showEvalResult(resultEl, best.heard, best.sim, target);
-                resolve();
-            };
-            rec.onerror = function(e) {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                var msg = e.error === 'no-speech' ? '声が検出されませんでした。マイクに近づいて話してください。'
-                        : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。ブラウザ設定から許可してください。'
-                        : e.error === 'audio-capture' ? 'マイクが見つかりません。'
-                        : 'エラー: ' + e.error;
-                resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識失敗</div><div class="tier-detail">' + escapeHtml(msg) + '</div></div>';
-                resolve();
-            };
-            rec.onend = function() {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押してから話してください。</div></div>';
-                resolve();
-            };
-            try { rec.start(); } catch(err) {
-                settled = true;
-                clearTimeout(timer);
-                reject(err);
-            }
-        });
-    }
-
-    async function evaluateViaWhisper(target, resultEl, key) {
-        if (!recordedBlob) {
-            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音がありません</div><div class="tier-detail">先に🎙️で録音してください</div></div>';
-            return;
-        }
-        resultEl.innerHTML = '<div class="eval-loading"><span class="spin">⏳</span> 評価中…</div>';
-        try {
-            var form = new FormData();
-            var ext = (recordedBlob.type.indexOf('mp4') >= 0) ? 'm4a'
-                    : (recordedBlob.type.indexOf('mpeg') >= 0) ? 'mp3'
-                    : 'webm';
-            form.append('file', recordedBlob, 'rec.' + ext);
-            form.append('model', 'whisper-1');
-            form.append('language', 'ko');
-            form.append('response_format', 'json');
-            var resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + key },
-                body: form
-            });
-            if (!resp.ok) throw new Error('Whisper API ' + resp.status);
-            var data = await resp.json();
-            var heard = (data.text || '').trim();
-            var sim = scorePronunciation(heard, target);
-            showEvalResult(resultEl, heard, sim, target);
-        } catch(err) {
-            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">評価失敗</div><div class="tier-detail">' + escapeHtml(String(err.message || err)) + '</div></div>';
-        }
-    }
-
-    async function evaluatePronunciation() {
-        var resultEl = document.getElementById('evalResult');
-        if (!resultEl) return;
-        var target = currentPracticeTarget || '';
-        if (!target) {
-            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対象語なし</div></div>';
-            return;
-        }
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SR) {
-            try {
-                await evaluateViaSpeechRecognition(target, resultEl);
-                return;
-            } catch(err) {
-                // SR 失敗時は Whisper にフォールバック
-                console.warn('SR failed, trying Whisper:', err);
-            }
-        }
-        var key = (APP_STATE.openaiApiKey || '').trim();
-        if (key) {
-            await evaluateViaWhisper(target, resultEl, key);
-            return;
-        }
-        resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対応していません</div><div class="tier-detail">このブラウザは音声認識をサポートしていません。Chrome または Safari をお試しください。</div></div>';
     }
 
     // ═══════════════════════════════════════════════════════
@@ -2416,8 +2295,6 @@
         var safeText = escapeHtml(text || '안녕하세요');
         var safeLabel = escapeHtml(label || text || '発音練習');
         currentPracticeTarget = text || '안녕하세요';
-        recordedBlob = null;
-        recordedAudio = null;
 
         content.innerHTML =
             '<div style="text-align:center;padding:16px 0;">' +
@@ -2425,13 +2302,12 @@
                 '<div style="font-size:13px;color:var(--text-light);">' + safeLabel + '</div>' +
             '</div>' +
             '<div class="record-panel">' +
+                '<div class="record-compare" style="margin-bottom:12px;">' +
+                    '<button class="btn btn-info tts-play" data-text="' + safeText + '">🔊 お手本を聞く</button>' +
+                '</div>' +
                 '<div class="record-center">' +
                     '<button class="record-btn" id="recordBtn">🎙️</button>' +
-                    '<div class="record-status" id="recordStatus">録音ボタンをタップして話す</div>' +
-                '</div>' +
-                '<div class="record-compare">' +
-                    '<button class="btn btn-info tts-play" data-text="' + safeText + '">🔊 お手本</button>' +
-                    '<button class="btn btn-success play-recorded-btn" id="playRecordedBtn" disabled>▶ 自分の声</button>' +
+                    '<div class="record-status" id="recordStatus">ボタンをタップして発音してみよう</div>' +
                 '</div>' +
                 '<div id="evalResult"></div>' +
             '</div>';
@@ -2441,11 +2317,8 @@
 
     function closePracticeModal() {
         document.getElementById('practiceModal').classList.remove('show');
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-            try { mediaRecorder.stop(); } catch(e) {}
-        }
+        stopEvaluation();
         stopAllTTS();
-        if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
     }
 
     function switchTab(tabId) {
@@ -2543,19 +2416,13 @@
         var recBtn = e.target.closest('#recordBtn');
         if (recBtn) {
             var statusEl = document.getElementById('recordStatus');
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                stopRecording(recBtn);
+            if (activeSR) {
+                stopEvaluation();
             } else {
-                startRecording(statusEl, recBtn);
+                startEvaluation(statusEl, recBtn);
             }
             return;
         }
-
-        var playRec = e.target.closest('#playRecordedBtn');
-        if (playRec) { playRecorded(); return; }
-
-        var evalBtn = e.target.closest('#evalBtn');
-        if (evalBtn) { evaluatePronunciation(); return; }
 
         // 練習タブ - モード切替
         var drillModeBtn = e.target.closest('[data-drill-mode]');
