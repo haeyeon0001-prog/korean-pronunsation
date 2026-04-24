@@ -1555,23 +1555,17 @@
     });
 
     function playViaHtml5(fname, btn, speedOverride, resetBtn) {
-        if (!primaryAudio) {
-            primaryAudio = new Audio();
-            primaryAudio.preload = 'auto';
-            primaryAudio.playsInline = true;
-        }
-        try { primaryAudio.pause(); } catch(e) {}
-        primaryAudio.src = 'audio/' + fname;
-        primaryAudio.playbackRate = speedOverride || 1.0;
-        primaryAudio.onplay = function() { setMascotSpeaking(true); };
-        primaryAudio.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-        primaryAudio.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-        primaryAudio.onpause = function() {
-            if (primaryAudio.ended) return;
-            setMascotSpeaking(false);
-        };
-        currentTTSAudio = primaryAudio;
-        var p = primaryAudio.play();
+        if (primaryAudio) { try { primaryAudio.pause(); primaryAudio.src = ''; } catch(e) {} }
+        var a = new Audio('audio/' + fname);
+        a.preload = 'auto';
+        a.playsInline = true;
+        a.playbackRate = speedOverride || 1.0;
+        a.onplay = function() { setMascotSpeaking(true); };
+        a.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+        a.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
+        primaryAudio = a;
+        currentTTSAudio = a;
+        var p = a.play();
         if (p && p.catch) p.catch(function(err) {
             console.warn('HTML5 Audio playback failed:', err);
             setMascotSpeaking(false);
@@ -1792,84 +1786,23 @@
     let recordedBlob = null;
     let recordedAudio = null;
     let recordStream = null;
-    let liveRecognizer = null;     // SpeechRecognition during recording
-    let liveAlternatives = [];     // transcripts captured during recording
-    let recognizerEnded = false;
-    let recorderStopped = false;
 
-    function tryFinalizeEvaluation() {
-        if (!recorderStopped || !recognizerEnded) return;
+    function finalizeEvaluation() {
         var resultEl = document.getElementById('evalResult');
         if (!resultEl) return;
         var target = currentPracticeTarget || '';
-        if (liveAlternatives.length > 0 && target) {
-            var best = { sim: 0, heard: '' };
-            liveAlternatives.forEach(function(h) {
-                var s = scorePronunciation(h, target);
-                if (s > best.sim) { best.sim = s; best.heard = h; }
-            });
-            showEvalResult(resultEl, best.heard, best.sim, target);
-            return;
-        }
         var key = (APP_STATE.openaiApiKey || '').trim();
         if (key && recordedBlob) {
             evaluateViaWhisper(target, resultEl, key);
             return;
         }
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">対応していません</div><div class="tier-detail">このブラウザは音声認識に対応していません。Chrome または Safari をお試しください。</div></div>';
-        } else {
-            resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識できませんでした</div><div class="tier-detail">もう一度マイクに近づいてハッキリと発音してください。</div></div>';
-        }
-    }
-
-    function startLiveRecognition() {
-        liveAlternatives = [];
-        recognizerEnded = false;
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { recognizerEnded = true; return; }
-        try {
-            liveRecognizer = new SR();
-            liveRecognizer.lang = 'ko-KR';
-            liveRecognizer.interimResults = false;
-            liveRecognizer.maxAlternatives = 3;
-            liveRecognizer.continuous = false;
-            liveRecognizer.onresult = function(e) {
-                try {
-                    var alts = e.results[0];
-                    for (var i = 0; i < alts.length; i++) {
-                        var h = (alts[i].transcript || '').trim();
-                        if (h) liveAlternatives.push(h);
-                    }
-                } catch(err) {}
-            };
-            liveRecognizer.onerror = function() {};
-            liveRecognizer.onend = function() {
-                recognizerEnded = true;
-                tryFinalizeEvaluation();
-            };
-            liveRecognizer.start();
-        } catch(e) {
-            recognizerEnded = true;
-        }
-    }
-
-    function stopLiveRecognition() {
-        if (liveRecognizer) {
-            try { liveRecognizer.stop(); } catch(e) {}
-        } else {
-            recognizerEnded = true;
-        }
+        resultEl.innerHTML = '<div class="eval-result tier-2"><div class="tier-label">録音できました 🎉</div><div class="tier-detail">「🔊 お手本」と「▶ 自分の声」を交互に聞き比べてみましょう。違いを感じたらもう一度挑戦！</div></div>';
     }
 
     async function startRecording(statusEl, btnEl) {
         try {
             recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             recordedChunks = [];
-            recorderStopped = false;
-            recognizerEnded = false;
-            liveAlternatives = [];
             var mime = '';
             var candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/mpeg'];
             for (var i = 0; i < candidates.length; i++) {
@@ -1893,12 +1826,10 @@
                 var playBtn = document.querySelector('.play-recorded-btn');
                 if (playBtn) playBtn.disabled = false;
                 var resultEl = document.getElementById('evalResult');
-                if (resultEl) resultEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--text-light);font-size:13px;">評価中…</div>';
-                recorderStopped = true;
-                tryFinalizeEvaluation();
+                if (resultEl) resultEl.innerHTML = '';
+                finalizeEvaluation();
             };
             mediaRecorder.start();
-            startLiveRecognition();
             if (btnEl) btnEl.classList.add('recording');
             if (btnEl) btnEl.textContent = '■';
             if (statusEl) statusEl.textContent = '● 録音中… もう一度タップで停止';
@@ -1914,7 +1845,6 @@
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             mediaRecorder.stop();
         }
-        stopLiveRecognition();
         if (btnEl) btnEl.classList.remove('recording');
         if (btnEl) btnEl.textContent = '🎙️';
     }
@@ -2511,9 +2441,6 @@
         currentPracticeTarget = text || '안녕하세요';
         recordedBlob = null;
         recordedAudio = null;
-        liveAlternatives = [];
-        recognizerEnded = false;
-        recorderStopped = false;
 
         content.innerHTML =
             '<div style="text-align:center;padding:16px 0;">' +
@@ -2540,7 +2467,6 @@
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
             try { mediaRecorder.stop(); } catch(e) {}
         }
-        if (liveRecognizer) { try { liveRecognizer.stop(); } catch(e) {} }
         stopAllTTS();
         if (recordedAudio) { try { recordedAudio.pause(); } catch(e) {} }
     }
