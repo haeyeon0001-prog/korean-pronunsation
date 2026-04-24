@@ -1747,22 +1747,112 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // 4. 発音評価 (SpeechRecognition による 3段階自動採点)
+    // 4. 発音評価 (Whisper優先 / SR フォールバック、3段階自動採点)
     // ═══════════════════════════════════════════════════════
     let activeSR = null;
+    let activeRecorder = null;
+    let activeStream = null;
+
+    function setRecIdle(btnEl) {
+        if (btnEl) { btnEl.classList.remove('recording'); btnEl.textContent = '🎙️'; }
+    }
+    function setRecActive(btnEl) {
+        if (btnEl) { btnEl.classList.add('recording'); btnEl.textContent = '■'; }
+    }
 
     function startEvaluation(statusEl, btnEl) {
-        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            if (statusEl) statusEl.textContent = '⚠️ このブラウザは音声認識に対応していません';
-            showToast('Chrome / Safari をお使いください', true);
-            return;
-        }
-        if (activeSR) { try { activeSR.stop(); } catch(e) {} activeSR = null; }
         stopAllTTS();
         var resultEl = document.getElementById('evalResult');
         if (resultEl) resultEl.innerHTML = '';
         var target = currentPracticeTarget || '';
+        var apiKey = (APP_STATE.openaiApiKey || '').trim();
+
+        if (apiKey) {
+            startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl);
+        } else {
+            startSREvaluation(target, statusEl, btnEl, resultEl);
+        }
+    }
+
+    function startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+            if (statusEl) statusEl.textContent = '⚠️ このブラウザは録音に対応していません';
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+            activeStream = stream;
+            var chunks = [];
+            var mime = MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4'
+                     : MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+                     : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+                     : '';
+            var rec;
+            try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+            catch(err) {
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                activeStream = null;
+                if (statusEl) statusEl.textContent = '⚠️ 録音エンジン失敗: ' + (err.name || err);
+                return;
+            }
+            activeRecorder = rec;
+            rec.ondataavailable = function(e) { if (e.data && e.data.size > 0) chunks.push(e.data); };
+            rec.onstop = function() {
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                activeRecorder = null;
+                activeStream = null;
+                setRecIdle(btnEl);
+                var blobType = rec.mimeType || mime || 'audio/webm';
+                var blob = new Blob(chunks, { type: blobType });
+                if (blob.size < 1000) {
+                    if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音が短すぎます</div><div class="tier-detail">もう一度ボタンを押してから話してください。</div></div>';
+                    if (statusEl) statusEl.textContent = '';
+                    return;
+                }
+                if (statusEl) statusEl.textContent = '';
+                if (resultEl) resultEl.innerHTML = '<div class="eval-loading"><span class="spin">⏳</span> 評価中…</div>';
+                var ext = blobType.indexOf('mp4') >= 0 ? 'm4a' : blobType.indexOf('webm') >= 0 ? 'webm' : 'wav';
+                var form = new FormData();
+                form.append('file', blob, 'rec.' + ext);
+                form.append('model', 'whisper-1');
+                form.append('language', 'ko');
+                form.append('response_format', 'json');
+                fetch('https://api.openai.com/v1/audio/transcriptions', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + apiKey },
+                    body: form
+                }).then(function(r) {
+                    if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t.slice(0, 120)); });
+                    return r.json();
+                }).then(function(data) {
+                    var heard = (data.text || '').trim();
+                    var sim = scorePronunciation(heard, target);
+                    if (resultEl) showEvalResult(resultEl, heard, sim, target);
+                }).catch(function(err) {
+                    if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">評価失敗</div><div class="tier-detail">' + escapeHtml(String(err.message || err)) + '</div></div>';
+                });
+            };
+            try {
+                rec.start();
+                setRecActive(btnEl);
+                if (statusEl) statusEl.textContent = '● 録音中…もう一度タップで評価';
+            } catch(err) {
+                activeRecorder = null;
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                activeStream = null;
+                if (statusEl) statusEl.textContent = '⚠️ 録音開始失敗: ' + (err.name || err);
+            }
+        }).catch(function(err) {
+            if (statusEl) statusEl.textContent = '⚠️ マイク許可が必要です (' + (err.name || err) + ')';
+        });
+    }
+
+    function startSREvaluation(target, statusEl, btnEl, resultEl) {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            if (statusEl) statusEl.textContent = '⚠️ 音声認識非対応。⚙️ 設定で OpenAI キーを入れると録音評価が使えます。';
+            return;
+        }
+        if (activeSR) { try { activeSR.stop(); } catch(e) {} activeSR = null; }
         var rec;
         try { rec = new SR(); } catch(err) {
             if (statusEl) statusEl.textContent = '⚠️ 認識エンジンを開始できません';
@@ -1774,14 +1864,6 @@
         rec.continuous = false;
         activeSR = rec;
         var settled = false;
-
-        function setIdle() {
-            if (btnEl) { btnEl.classList.remove('recording'); btnEl.textContent = '🎙️'; }
-        }
-        function setActive() {
-            if (btnEl) { btnEl.classList.add('recording'); btnEl.textContent = '■'; }
-        }
-
         rec.onresult = function(e) {
             if (settled) return;
             settled = true;
@@ -1800,25 +1882,27 @@
         rec.onerror = function(e) {
             if (settled) return;
             settled = true;
-            var msg = e.error === 'no-speech' ? '声が検出されませんでした。もう一度ボタンを押して話してください。'
+            var hint = '⚙️ 設定で OpenAI キーを入れると録音評価が使えます。';
+            var msg = e.error === 'no-speech' ? '声が検出されませんでした。' + hint
                     : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。'
                     : e.error === 'audio-capture' ? 'マイクが見つかりません。'
-                    : 'エラー: ' + e.error;
+                    : e.error === 'network' ? 'ネットワークエラー: オンラインで再試行してください。' + hint
+                    : 'エラー: ' + e.error + '。' + hint;
             if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識失敗</div><div class="tier-detail">' + escapeHtml(msg) + '</div></div>';
             if (statusEl) statusEl.textContent = '';
         };
         rec.onend = function() {
             activeSR = null;
-            setIdle();
+            setRecIdle(btnEl);
             if (!settled) {
                 settled = true;
-                if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押してから話してください。</div></div>';
+                if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押して、すぐに話してください。⚙️ 設定で OpenAI キーを入れると録音評価が使えます。</div></div>';
                 if (statusEl) statusEl.textContent = '';
             }
         };
         try {
             rec.start();
-            setActive();
+            setRecActive(btnEl);
             if (statusEl) statusEl.textContent = '● 話してください…';
         } catch(err) {
             activeSR = null;
@@ -1827,7 +1911,12 @@
     }
 
     function stopEvaluation() {
+        if (activeRecorder) { try { activeRecorder.stop(); } catch(e) {} return; }
         if (activeSR) { try { activeSR.stop(); } catch(e) {} }
+    }
+
+    function isEvaluating() {
+        return !!(activeSR || activeRecorder);
     }
 
     // ═══════════════════════════════════════════════════════
@@ -2415,7 +2504,7 @@
         var recBtn = e.target.closest('#recordBtn');
         if (recBtn) {
             var statusEl = document.getElementById('recordStatus');
-            if (activeSR) {
+            if (isEvaluating()) {
                 stopEvaluation();
             } else {
                 startEvaluation(statusEl, recBtn);
