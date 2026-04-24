@@ -1493,7 +1493,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'openai-nova-2026-04-24';
+    var AUDIO_VERSION = 'openai-onyx-hd-2026-04-24';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
