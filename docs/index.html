@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>韓国語 発音マスター</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1575,7 +1578,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'jian-v4-2026-04-25';
+    var AUDIO_VERSION = 'jian-v5-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1621,46 +1624,7 @@
     }
 
     function playPrerecorded(fname, btn, speedOverride, resetBtn) {
-        if (IS_IOS) return playViaHtml5(fname, btn, speedOverride, resetBtn);
-        var ctx = getAudioCtx();
-        if (!ctx) return false;
-        stopWebAudio();
-        // iOS: resume を await してから再生。ユーザージェスチャー内で呼ばれた前提。
-        var resumed = (ctx.state === 'suspended') ? ctx.resume() : Promise.resolve();
-        resumed.then(function() {
-            return getPaddedBuffer(fname);
-        }).then(function(buffer) {
-            if (ctx.state !== 'running') {
-                throw new Error('AudioContext not running (state=' + ctx.state + ')');
-            }
-            var src = ctx.createBufferSource();
-            src.buffer = buffer;
-            if (speedOverride) src.playbackRate.value = speedOverride;
-            src.connect(ctx.destination);
-            setMascotSpeaking(true);
-            src.onended = function() {
-                if (currentAudioSource === src) currentAudioSource = null;
-                setMascotSpeaking(false);
-                if (resetBtn) resetBtn();
-            };
-            currentAudioSource = src;
-            src.start(0);
-        }).catch(function(err) {
-            console.warn('Web Audio playback failed:', err);
-            setMascotSpeaking(false);
-            // HTML5 Audio にフォールバック
-            var audio = new Audio('audio/' + fname);
-            if (speedOverride) audio.playbackRate = speedOverride;
-            audio.onplay = function() { setMascotSpeaking(true); };
-            audio.onended = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-            audio.onerror = function() { setMascotSpeaking(false); if (resetBtn) resetBtn(); };
-            audio.play().catch(function(e) {
-                console.warn('HTML5 Audio playback failed:', e);
-                if (resetBtn) resetBtn();
-            });
-            currentTTSAudio = audio;
-        });
-        return true;
+        return playViaHtml5(fname, btn, speedOverride, resetBtn);
     }
 
     function speakText(text, btn, speedOverride) {
@@ -1800,6 +1764,16 @@
     }
 
     async function startRecording(statusEl, btnEl) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            if (statusEl) statusEl.textContent = '⚠️ このブラウザは録音に対応していません';
+            showToast('録音 API 非対応', true);
+            return;
+        }
+        if (typeof MediaRecorder === 'undefined') {
+            if (statusEl) statusEl.textContent = '⚠️ MediaRecorder 非対応';
+            showToast('録音 API 非対応', true);
+            return;
+        }
         try {
             recordStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             recordedChunks = [];
@@ -1835,8 +1809,11 @@
             if (statusEl) statusEl.textContent = '● 録音中… もう一度タップで停止';
         } catch(err) {
             console.error(err);
-            showToast('マイクへのアクセスが拒否されました', true);
-            if (statusEl) statusEl.textContent = '';
+            var msg = (err && err.name === 'NotAllowedError')
+                ? 'マイクへのアクセスが拒否されました。設定でマイク許可を確認してください。'
+                : 'マイクを開始できませんでした: ' + (err && err.name ? err.name : 'Unknown');
+            showToast(msg, true);
+            if (statusEl) statusEl.textContent = '⚠️ ' + msg;
             if (btnEl) { btnEl.classList.remove('recording'); btnEl.textContent = '🎙️'; }
         }
     }
