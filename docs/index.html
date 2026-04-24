@@ -1766,6 +1766,9 @@
     // ═══════════════════════════════════════════════════════
     // 4. 発音評価 (Whisper優先 / SR フォールバック、3段階自動採点)
     // ═══════════════════════════════════════════════════════
+    // Cloudflare Worker プロキシ URL (デプロイ後にここに貼る)。
+    // 設定されていれば学生は OpenAI キー不要。未設定なら個別キー or SR にフォールバック。
+    const WHISPER_PROXY_URL = '';
     let activeSR = null;
     let activeRecorder = null;
     let activeStream = null;
@@ -1784,14 +1787,21 @@
         var target = currentPracticeTarget || '';
         var apiKey = (APP_STATE.openaiApiKey || '').trim();
 
-        if (apiKey) {
-            startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl);
-        } else {
-            startSREvaluation(target, statusEl, btnEl, resultEl);
+        // ① 先生デプロイの Whisper プロキシがあれば最優先 (学生はキー不要)
+        if (WHISPER_PROXY_URL) {
+            startWhisperEvaluation(target, statusEl, btnEl, '', resultEl, WHISPER_PROXY_URL);
+            return;
         }
+        // ② 個別に OpenAI キーを入れている場合 (直接 OpenAI を叩く)
+        if (apiKey) {
+            startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl, 'https://api.openai.com/v1/audio/transcriptions');
+            return;
+        }
+        // ③ どちらも無ければ SpeechRecognition にフォールバック
+        startSREvaluation(target, statusEl, btnEl, resultEl);
     }
 
-    function startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl) {
+    function startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl, endpoint) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
             if (statusEl) statusEl.textContent = '⚠️ このブラウザは録音に対応していません';
             return;
@@ -1833,9 +1843,10 @@
                 form.append('model', 'whisper-1');
                 form.append('language', 'ko');
                 form.append('response_format', 'json');
-                fetch('https://api.openai.com/v1/audio/transcriptions', {
+                var headers = apiKey ? { 'Authorization': 'Bearer ' + apiKey } : {};
+                fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + apiKey },
+                    headers: headers,
                     body: form
                 }).then(function(r) {
                     if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status + ': ' + t.slice(0, 120)); });

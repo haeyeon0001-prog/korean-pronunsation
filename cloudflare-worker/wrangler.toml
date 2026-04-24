@@ -1,0 +1,7 @@
+name = "korean-pron-whisper"
+main = "worker.js"
+compatibility_date = "2025-10-01"
+
+# Optional: lock CORS to your GitHub Pages origin after you verify things work
+# [vars]
+# ALLOWED_ORIGIN = "https://haeyeon0001-prog.github.io"
