@@ -2,3 +2,5 @@
 .netlify-site-id
 /tmp/*
 *.aiff
+cloudflare-worker/.wrangler/
+cloudflare-worker/node_modules/
