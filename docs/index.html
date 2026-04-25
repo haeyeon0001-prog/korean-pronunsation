@@ -616,6 +616,26 @@
             color: var(--text-light);
             margin-top: 8px;
         }
+        .self-listen-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-listen {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 999px;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 110px;
+        }
+        .btn-listen.mine { background: var(--success, #2a9d6c); }
+        .btn-listen:active { transform: scale(0.96); }
         .eval-result .heard {
             display: inline-block;
             margin-top: 6px;
@@ -1600,7 +1620,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'kabang-sikdang-fix-v10-2026-04-25';
+    var AUDIO_VERSION = 'self-listen-v11-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1800,8 +1820,79 @@
             startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl, 'https://api.openai.com/v1/audio/transcriptions');
             return;
         }
-        // ③ どちらも無ければ SpeechRecognition にフォールバック
-        startSREvaluation(target, statusEl, btnEl, resultEl);
+        // ③ デフォルト: 録音→お手本と聴き比べる (スコアなし、確実に動く)
+        startSelfListenRecording(target, statusEl, btnEl, resultEl);
+    }
+
+    // 録音 → 自分の声をお手本と聴き比べる方式 (無料、PC/iOS/Android 全部で動く)
+    function startSelfListenRecording(target, statusEl, btnEl, resultEl) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音非対応</div><div class="tier-detail">このブラウザは録音に対応していません。Chrome/Safari/Edge の最新版でお試しください。</div></div>';
+            return;
+        }
+        if (statusEl) statusEl.textContent = '🎤 マイク準備中…';
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+            var mime = '';
+            // iOS Safari は audio/mp4、それ以外は webm/opus
+            var candidates = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus'];
+            for (var i = 0; i < candidates.length; i++) {
+                if (typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(candidates[i])) {
+                    mime = candidates[i]; break;
+                }
+            }
+            var rec;
+            try { rec = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+            catch(err) {
+                stream.getTracks().forEach(function(t){t.stop();});
+                if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音開始失敗</div><div class="tier-detail">' + escapeHtml(err.name || String(err)) + '</div></div>';
+                return;
+            }
+            activeRecorder = rec;
+            activeStream = stream;
+            var chunks = [];
+            rec.ondataavailable = function(e) { if (e.data && e.data.size) chunks.push(e.data); };
+            rec.onstop = function() {
+                try { stream.getTracks().forEach(function(t){t.stop();}); } catch(e){}
+                activeRecorder = null;
+                activeStream = null;
+                setRecIdle(btnEl);
+                if (statusEl) statusEl.textContent = '';
+                if (!chunks.length) {
+                    if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">録音失敗</div><div class="tier-detail">音声が取得できませんでした。もう一度お試しください。</div></div>';
+                    return;
+                }
+                var blob = new Blob(chunks, { type: mime || 'audio/webm' });
+                var url = URL.createObjectURL(blob);
+                renderSelfListen(resultEl, target, url);
+            };
+            rec.start();
+            setRecActive(btnEl);
+            if (statusEl) statusEl.textContent = '● 録音中… (もう一度ボタンを押すと停止)';
+            // 安全装置: 6秒で自動停止
+            setTimeout(function(){ if (activeRecorder === rec && rec.state === 'recording') { try{rec.stop();}catch(e){} } }, 6000);
+        }).catch(function(err) {
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">マイク許可が必要</div><div class="tier-detail">ブラウザのマイク権限を「許可」にしてください。(' + escapeHtml(err.name || String(err)) + ')</div></div>';
+            if (statusEl) statusEl.textContent = '';
+            setRecIdle(btnEl);
+        });
+    }
+
+    function renderSelfListen(resultEl, target, myUrl) {
+        if (!resultEl) return;
+        var refUrl = '';
+        try {
+            var fname = (AUDIO_MANIFEST || {})[target];
+            if (fname) refUrl = 'audio/' + fname + '?v=' + AUDIO_VERSION;
+        } catch(e){}
+        resultEl.innerHTML =
+          '<div class="eval-result tier-2">' +
+            '<div class="tier-label">録音できました ✓</div>' +
+            '<div class="tier-detail">お手本と自分の声を聴き比べてみよう。</div>' +
+            '<div class="self-listen-row">' +
+              (refUrl ? '<button class="btn-listen ref" data-url="' + escapeHtml(refUrl) + '">▶ お手本</button>' : '') +
+              '<button class="btn-listen mine" data-url="' + escapeHtml(myUrl) + '">▶ 自分の声</button>' +
+            '</div>' +
+          '</div>';
     }
 
     function startWhisperEvaluation(target, statusEl, btnEl, apiKey, resultEl, endpoint) {
@@ -2598,6 +2689,21 @@
                 stopEvaluation();
             } else {
                 startEvaluation(statusEl, recBtn);
+            }
+            return;
+        }
+
+        // 自分の声 / お手本 再生ボタン (録音後のリスニング比較)
+        var listenBtn = e.target.closest('.btn-listen');
+        if (listenBtn) {
+            var url = listenBtn.dataset.url;
+            if (url) {
+                stopAllTTS();
+                var a = new Audio(url);
+                a.play().catch(function(err){
+                    listenBtn.textContent = '⚠️ 再生失敗';
+                    setTimeout(function(){ listenBtn.textContent = listenBtn.classList.contains('ref') ? '▶ お手本' : '▶ 自分の声'; }, 1500);
+                });
             }
             return;
         }
