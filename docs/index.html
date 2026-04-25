@@ -1143,8 +1143,6 @@
         </div>
     </div>
 
-    <button class="fab-practice" id="fabPractice" title="発音練習">🎙️</button>
-
     <div class="bottom-nav" id="bottomNav">
         <div class="nav-item active" data-tab="0">
             <span class="icon"><svg viewBox="0 0 24 24"><!-- ㄱ + ㅏ shape --><path d="M5 4 L12 4 L12 9"/><path d="M17 3 L17 21"/><path d="M17 12 L22 12"/></svg></span>
@@ -2771,19 +2769,6 @@
             e.stopPropagation();
             var speed = tts.dataset.speed ? parseFloat(tts.dataset.speed) : undefined;
             speakText(tts.dataset.text, tts, speed);
-            return;
-        }
-
-        var fab = e.target.closest('#fabPractice');
-        if (fab) {
-            var text = '안녕하세요';
-            var label = 'こんにちは';
-            if (APP_STATE.selectedLetter) {
-                var list = (APP_STATE.subtab0 === 'consonants') ? CONSONANTS : VOWELS;
-                var found = list.find(function(x) { return x.h === APP_STATE.selectedLetter; });
-                if (found) { text = found.name || found.sample || found.h; label = found.h + ' - ' + found.jp; }
-            }
-            openPracticeModal(text, label);
             return;
         }
 
