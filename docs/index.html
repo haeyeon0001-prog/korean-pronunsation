@@ -1600,7 +1600,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'jian-restore-v9-2026-04-25';
+    var AUDIO_VERSION = 'kabang-sikdang-fix-v10-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1880,9 +1880,28 @@
     function startSREvaluation(target, statusEl, btnEl, resultEl) {
         var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
-            if (statusEl) statusEl.textContent = '⚠️ 音声認識非対応。⚙️ 設定で OpenAI キーを入れると録音評価が使えます。';
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声認識非対応</div><div class="tier-detail">このブラウザは音声認識に対応していません。Chrome / Edge / Safari の最新版でお試しください。</div></div>';
             return;
         }
+
+        // ① まず getUserMedia でマイク許可を確実に得る (iOS Safari の SR 単体起動だと黙って失敗することがある)
+        if (statusEl) statusEl.textContent = '🎤 マイク準備中…';
+        var micPromise = (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+            ? navigator.mediaDevices.getUserMedia({ audio: true }).then(function(s){ return s; })
+            : Promise.resolve(null);
+
+        micPromise.then(function(stream) {
+            // 取得した stream はすぐ stop (SR が内部で別途マイクを掴む)
+            if (stream) { try { stream.getTracks().forEach(function(t){t.stop();}); } catch(e){} }
+            actuallyStartSR(SR, target, statusEl, btnEl, resultEl);
+        }).catch(function(err) {
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">マイク許可が必要</div><div class="tier-detail">ブラウザのマイク権限を「許可」にしてください。(' + escapeHtml(err.name || String(err)) + ')</div></div>';
+            if (statusEl) statusEl.textContent = '';
+            setRecIdle(btnEl);
+        });
+    }
+
+    function actuallyStartSR(SR, target, statusEl, btnEl, resultEl) {
         if (activeSR) { try { activeSR.stop(); } catch(e) {} activeSR = null; }
         var rec;
         try { rec = new SR(); } catch(err) {
@@ -1890,46 +1909,75 @@
             return;
         }
         rec.lang = 'ko-KR';
-        rec.interimResults = false;
+        rec.interimResults = true;     // 中間結果も拾って取り逃しを減らす
         rec.maxAlternatives = 5;
         rec.continuous = false;
         activeSR = rec;
         var settled = false;
+        var bestInterim = '';
+        var heardAnything = false;
+
+        rec.onaudiostart  = function() { heardAnything = true; if (statusEl) statusEl.textContent = '● 話してください…'; };
+        rec.onspeechstart = function() { heardAnything = true; };
+
         rec.onresult = function(e) {
-            if (settled) return;
-            settled = true;
-            var best = { heard: '', sim: 0 };
             try {
-                var alts = e.results[0];
-                for (var i = 0; i < alts.length; i++) {
-                    var h = (alts[i].transcript || '').trim();
-                    var s = scorePronunciation(h, target);
-                    if (s > best.sim) { best.sim = s; best.heard = h; }
+                for (var i = e.resultIndex; i < e.results.length; i++) {
+                    var r = e.results[i];
+                    if (r.isFinal) {
+                        if (settled) continue;
+                        settled = true;
+                        var best = { heard: '', sim: 0 };
+                        for (var j = 0; j < r.length; j++) {
+                            var h = (r[j].transcript || '').trim();
+                            var s = scorePronunciation(h, target);
+                            if (s > best.sim) { best.sim = s; best.heard = h; }
+                        }
+                        if (resultEl) showEvalResult(resultEl, best.heard, best.sim, target);
+                        if (statusEl) statusEl.textContent = '';
+                    } else {
+                        var t = (r[0].transcript || '').trim();
+                        if (t) bestInterim = t;
+                        if (statusEl) statusEl.textContent = '● ' + t;
+                    }
                 }
             } catch(err) {}
-            if (resultEl) showEvalResult(resultEl, best.heard, best.sim, target);
-            if (statusEl) statusEl.textContent = '';
         };
         rec.onerror = function(e) {
             if (settled) return;
+            // bestInterim があれば最終結果として採用 (iOS Safari は no-speech を誤発火することがある)
+            if (bestInterim) {
+                settled = true;
+                if (resultEl) showEvalResult(resultEl, bestInterim, scorePronunciation(bestInterim, target), target);
+                if (statusEl) statusEl.textContent = '';
+                return;
+            }
             settled = true;
-            var hint = '⚙️ 設定で OpenAI キーを入れると録音評価が使えます。';
-            var msg = e.error === 'no-speech' ? '声が検出されませんでした。' + hint
-                    : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。'
+            var msg = e.error === 'no-speech' ? '声が検出されませんでした。マイクに近づいてはっきり話してください。'
+                    : e.error === 'not-allowed' ? 'マイクの使用が許可されていません。ブラウザの設定からマイクを許可してください。'
                     : e.error === 'audio-capture' ? 'マイクが見つかりません。'
-                    : e.error === 'network' ? 'ネットワークエラー: オンラインで再試行してください。' + hint
-                    : 'エラー: ' + e.error + '。' + hint;
+                    : e.error === 'network' ? 'ネットワークエラー: オンラインで再試行してください。'
+                    : e.error === 'aborted' ? '中断されました。もう一度お試しください。'
+                    : 'エラー: ' + e.error;
             if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">認識失敗</div><div class="tier-detail">' + escapeHtml(msg) + '</div></div>';
             if (statusEl) statusEl.textContent = '';
         };
         rec.onend = function() {
             activeSR = null;
             setRecIdle(btnEl);
-            if (!settled) {
+            if (settled) return;
+            if (bestInterim) {
                 settled = true;
-                if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">もう一度ボタンを押して、すぐに話してください。⚙️ 設定で OpenAI キーを入れると録音評価が使えます。</div></div>';
+                if (resultEl) showEvalResult(resultEl, bestInterim, scorePronunciation(bestInterim, target), target);
                 if (statusEl) statusEl.textContent = '';
+                return;
             }
+            settled = true;
+            var detail = heardAnything
+                ? '声は届いていますが、はっきり認識できませんでした。もう一度、少し大きめの声で話してみてください。'
+                : 'マイクから音が入っていません。マイクが ON か、ブラウザの権限が「許可」になっているかご確認ください。';
+            if (resultEl) resultEl.innerHTML = '<div class="eval-result tier-3"><div class="tier-label">音声未検出</div><div class="tier-detail">' + escapeHtml(detail) + '</div></div>';
+            if (statusEl) statusEl.textContent = '';
         };
         try {
             rec.start();
