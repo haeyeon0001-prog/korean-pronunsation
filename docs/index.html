@@ -1962,7 +1962,8 @@
             var fname = (AUDIO_MANIFEST || {})[target];
             if (fname) refUrl = 'audio/' + fname + '?v=' + AUDIO_VERSION;
         } catch(e){}
-        var tier = sim >= 0.85 ? 1 : sim >= 0.55 ? 2 : 3;
+        // 緩めの閾値: 短い韓国語単語は jamo 1個違うと急減するので甘く
+        var tier = sim >= 0.70 ? 1 : sim >= 0.35 ? 2 : 3;
         var label = tier === 1 ? '上手 ◎' : tier === 2 ? 'もう一歩 ○' : 'もう一度 △';
         var pct = Math.round(sim * 100);
         var heardSafe = escapeHtml(heard || '(認識できず)');
