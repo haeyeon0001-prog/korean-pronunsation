@@ -1045,6 +1045,47 @@
             margin-bottom: 10px;
         }
     </style>
+    <!-- Transformers.js: ブラウザ内 Whisper で発音採点 (無料・初回 ~40MB ダウンロード後はキャッシュ) -->
+    <script type="module">
+      let _whisperPipe = null;
+      let _whisperLoading = null;
+      window.__loadWhisper = async function(onProgress) {
+        if (_whisperPipe) return _whisperPipe;
+        if (_whisperLoading) return _whisperLoading;
+        _whisperLoading = (async () => {
+          const mod = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+          mod.env.allowLocalModels = false;
+          _whisperPipe = await mod.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny', {
+            progress_callback: onProgress,
+            quantized: true,
+          });
+          return _whisperPipe;
+        })();
+        return _whisperLoading;
+      };
+      window.__transcribeBlob = async function(blob) {
+        const pipe = await window.__loadWhisper();
+        const arrayBuffer = await blob.arrayBuffer();
+        const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audio = await decodeCtx.decodeAudioData(arrayBuffer.slice(0));
+        decodeCtx.close && decodeCtx.close();
+        let pcm;
+        if (audio.sampleRate === 16000) {
+          pcm = audio.getChannelData(0);
+        } else {
+          const off = new Ctx(1, Math.ceil(audio.duration * 16000), 16000);
+          const src = off.createBufferSource();
+          src.buffer = audio;
+          src.connect(off.destination);
+          src.start();
+          const rendered = await off.startRendering();
+          pcm = rendered.getChannelData(0);
+        }
+        const result = await pipe(pcm, { language: 'korean', task: 'transcribe' });
+        return (result && result.text || '').trim();
+      };
+    </script>
 </head>
 <body>
 
@@ -1620,7 +1661,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'self-listen-v11-2026-04-25';
+    var AUDIO_VERSION = 'browser-whisper-v12-2026-04-25';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -1863,7 +1904,8 @@
                 }
                 var blob = new Blob(chunks, { type: mime || 'audio/webm' });
                 var url = URL.createObjectURL(blob);
-                renderSelfListen(resultEl, target, url);
+                // ブラウザ内 Whisper で採点 (失敗しても自分の声/お手本ボタンは出る)
+                scoreWithBrowserWhisper(resultEl, target, url, blob, statusEl);
             };
             rec.start();
             setRecActive(btnEl);
@@ -1877,17 +1919,78 @@
         });
     }
 
-    function renderSelfListen(resultEl, target, myUrl) {
+    // ブラウザ内 Whisper で採点 → 三段階バッジ + 聴き比べボタン
+    function scoreWithBrowserWhisper(resultEl, target, myUrl, blob, statusEl) {
+        if (!resultEl) return;
+        // モデル未ロードの初回は進捗表示
+        if (statusEl) statusEl.textContent = '🤖 AIモデル準備中… (初回のみ ~40MB)';
+        resultEl.innerHTML = '<div class="eval-result tier-2"><div class="tier-label">採点中…</div><div class="tier-detail" id="whisperProgress">AI モデルを読み込んでいます。初回のみ少し時間がかかります。</div></div>';
+        var progressEl = document.getElementById('whisperProgress');
+        function onProg(p) {
+            if (!progressEl) return;
+            if (p && p.status === 'progress' && p.file && typeof p.progress === 'number') {
+                progressEl.textContent = '📥 モデル DL: ' + p.file.split('/').pop() + ' ' + Math.round(p.progress) + '%';
+            } else if (p && p.status === 'done') {
+                progressEl.textContent = '⚙️ モデル準備完了…';
+            } else if (p && p.status === 'ready') {
+                progressEl.textContent = '🎧 解析中…';
+            }
+        }
+        if (typeof window.__loadWhisper !== 'function') {
+            // モジュール未準備 (古いブラウザ等)
+            renderSelfListen(resultEl, target, myUrl);
+            if (statusEl) statusEl.textContent = '';
+            return;
+        }
+        window.__loadWhisper(onProg).then(function(){
+            if (progressEl) progressEl.textContent = '🎧 解析中…';
+            return window.__transcribeBlob(blob);
+        }).then(function(heard){
+            if (statusEl) statusEl.textContent = '';
+            var sim = scorePronunciation(heard, target);
+            renderScoredResult(resultEl, target, myUrl, heard, sim);
+        }).catch(function(err){
+            if (statusEl) statusEl.textContent = '';
+            // 失敗時は聴き比べモードにフォールバック
+            renderSelfListen(resultEl, target, myUrl, '採点エンジン読み込みに失敗しました: ' + (err && err.message || err));
+        });
+    }
+
+    function renderScoredResult(resultEl, target, myUrl, heard, sim) {
+        var refUrl = '';
+        try {
+            var fname = (AUDIO_MANIFEST || {})[target];
+            if (fname) refUrl = 'audio/' + fname + '?v=' + AUDIO_VERSION;
+        } catch(e){}
+        var tier = sim >= 0.85 ? 1 : sim >= 0.55 ? 2 : 3;
+        var label = tier === 1 ? '上手 ◎' : tier === 2 ? 'もう一歩 ○' : 'もう一度 △';
+        var pct = Math.round(sim * 100);
+        var heardSafe = escapeHtml(heard || '(認識できず)');
+        var targetSafe = escapeHtml(target);
+        resultEl.innerHTML =
+          '<div class="eval-result tier-' + tier + '">' +
+            '<div class="tier-label">' + label + '</div>' +
+            '<div class="tier-detail">類似度 ' + pct + '%　お手本: <b>' + targetSafe + '</b>　聞こえた: <b>' + heardSafe + '</b></div>' +
+            '<div class="self-listen-row">' +
+              (refUrl ? '<button class="btn-listen ref" data-url="' + escapeHtml(refUrl) + '">▶ お手本</button>' : '') +
+              '<button class="btn-listen mine" data-url="' + escapeHtml(myUrl) + '">▶ 自分の声</button>' +
+            '</div>' +
+          '</div>';
+    }
+
+    function renderSelfListen(resultEl, target, myUrl, errorNote) {
         if (!resultEl) return;
         var refUrl = '';
         try {
             var fname = (AUDIO_MANIFEST || {})[target];
             if (fname) refUrl = 'audio/' + fname + '?v=' + AUDIO_VERSION;
         } catch(e){}
+        var noteHtml = errorNote ? '<div class="tier-detail" style="color:#b84b44;">' + escapeHtml(errorNote) + '</div>' : '';
         resultEl.innerHTML =
           '<div class="eval-result tier-2">' +
             '<div class="tier-label">録音できました ✓</div>' +
             '<div class="tier-detail">お手本と自分の声を聴き比べてみよう。</div>' +
+            noteHtml +
             '<div class="self-listen-row">' +
               (refUrl ? '<button class="btn-listen ref" data-url="' + escapeHtml(refUrl) + '">▶ お手本</button>' : '') +
               '<button class="btn-listen mine" data-url="' + escapeHtml(myUrl) + '">▶ 自分の声</button>' +
