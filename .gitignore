@@ -1,6 +1,6 @@
 .DS_Store
-.netlify-site-id
 /tmp/*
 *.aiff
+.claude/
 cloudflare-worker/.wrangler/
 cloudflare-worker/node_modules/
