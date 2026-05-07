@@ -1126,6 +1126,7 @@
         <div class="tab-content" id="tabpractice">
             <div class="sub-tabs">
                 <div class="sub-tab active" data-subtab="drill">単語ドリル</div>
+                <div class="sub-tab" data-subtab="threes">激音・濃音・平音</div>
                 <div class="sub-tab" data-subtab="game">組立ゲーム</div>
             </div>
             <div id="practice-container"></div>
@@ -1394,6 +1395,44 @@
         { w:'손', m:'手' }, { w:'병원', m:'病院' }, { w:'약속', m:'約束' }
     ];
 
+    // 練習用語彙: 平音 (평음) — 5語ずつグループ化
+    const PRACTICE_PYEONG = [
+        { w:'가다', m:'行く' }, { w:'보다', m:'見る' }, { w:'사다', m:'買う' },
+        { w:'자다', m:'寝る' }, { w:'도시', m:'都市' },
+        { w:'다리', m:'橋/脚' }, { w:'어디', m:'どこ' }, { w:'거기', m:'そこ' },
+        { w:'바다', m:'海' }, { w:'부자', m:'金持ち' }
+    ];
+
+    // 練習用語彙: 激音 (격음) — 5語ずつグループ化
+    const PRACTICE_GYEOK = [
+        { w:'기차', m:'汽車' }, { w:'스키', m:'スキー' }, { w:'우표', m:'切手' },
+        { w:'지하', m:'地下' }, { w:'채소', m:'野菜' },
+        { w:'크기', m:'大きさ' }, { w:'포도', m:'ぶどう' }, { w:'화가', m:'画家' },
+        { w:'고추', m:'唐辛子' }, { w:'이해', m:'理解' },
+        { w:'조카', m:'甥/姪' }, { w:'초대', m:'招待' }, { w:'취미', m:'趣味' },
+        { w:'태도', m:'態度' }, { w:'파도', m:'波' },
+        { w:'호수', m:'湖' }, { w:'치마', m:'スカート' }, { w:'티셔츠', m:'Tシャツ' },
+        { w:'아파트', m:'アパート' }, { w:'스포츠', m:'スポーツ' },
+        { w:'스케이트', m:'スケート' }, { w:'차', m:'お茶/車' }, { w:'피', m:'血' },
+        { w:'코', m:'鼻' }, { w:'커피', m:'コーヒー' },
+        { w:'토마토', m:'トマト' }, { w:'나이프', m:'ナイフ' }, { w:'케이크', m:'ケーキ' },
+        { w:'포테이토', m:'ポテト' }, { w:'포크', m:'フォーク' },
+        { w:'코코아', m:'ココア' }, { w:'피자', m:'ピザ' }, { w:'스파게티', m:'スパゲッティ' },
+        { w:'스테이크', m:'ステーキ' }, { w:'치즈', m:'チーズ' }
+    ];
+
+    // 練習用語彙: 濃音 (농음) — 5語ずつグループ化
+    const PRACTICE_NONG = [
+        { w:'아빠', m:'パパ' }, { w:'오빠', m:'(妹から見て)兄' }, { w:'아저씨', m:'おじさん' },
+        { w:'가짜', m:'偽物' }, { w:'진짜', m:'本物' },
+        { w:'찌개', m:'チゲ' }, { w:'쓰레기', m:'ゴミ' }, { w:'바빠요', m:'忙しいです' },
+        { w:'싸요', m:'安いです' }, { w:'깨', m:'ごま' },
+        { w:'때', m:'時' }, { w:'또', m:'また' }, { w:'아까', m:'さっき' },
+        { w:'이따가', m:'あとで' }, { w:'토끼', m:'うさぎ' },
+        { w:'코끼리', m:'ぞう' }, { w:'따로', m:'別々に' }, { w:'어때', m:'どう?' },
+        { w:'쓰기', m:'書くこと' }, { w:'어깨', m:'肩' }
+    ];
+
     // 発音変化ルール
     const RULES = [
         {
@@ -1501,6 +1540,10 @@
         subtab1: 'batchim',
         subtabPractice: 'drill',
         practiceMode: 'cv',
+        threesType: 'gyeok',
+        threesGyeokGroup: 0,
+        threesNongGroup: 0,
+        threesPyeongGroup: 0,
         gameMode: 'cv',
         selectedLetter: null,
         openaiApiKey: '',
@@ -1668,7 +1711,7 @@
     }
 
     // AUDIO_VERSION を変えると manifest & 音声ファイルの再取得を強制できる
-    var AUDIO_VERSION = 'ios-tap-fix-v13-2026-04-25';
+    var AUDIO_VERSION = 'add-3sounds-2026-05-07';
     function loadAudioManifest() {
         return fetch('audio/manifest.json?v=' + AUDIO_VERSION)
             .then(function(r) { return r.ok ? r.json() : {}; })
@@ -2589,6 +2632,41 @@
             html += '<div class="drill-actions">';
             html += '<button id="drillReshuffle" class="primary">🔀 やり直し (新しい10語)</button>';
             html += '</div>';
+        } else if (APP_STATE.subtabPractice === 'threes') {
+            // 激音・濃音・平音 (5語ずつグループ化)
+            var ttype = APP_STATE.threesType || 'gyeok';
+            var tarr = (ttype === 'gyeok') ? PRACTICE_GYEOK : (ttype === 'nong') ? PRACTICE_NONG : PRACTICE_PYEONG;
+            var tgroups = Math.ceil(tarr.length / 5);
+            var tgKey = (ttype === 'gyeok') ? 'threesGyeokGroup' : (ttype === 'nong') ? 'threesNongGroup' : 'threesPyeongGroup';
+            var tgIdx = APP_STATE[tgKey] || 0;
+            if (tgIdx >= tgroups) tgIdx = 0;
+            var tWords = tarr.slice(tgIdx * 5, tgIdx * 5 + 5);
+            var tLabel = (ttype === 'gyeok') ? '激音 (격음)' : (ttype === 'nong') ? '濃音 (농음)' : '平音 (평음)';
+
+            html += '<div class="mode-switch">';
+            html += '<button data-threes-type="gyeok" class="' + (ttype==='gyeok'?'active':'') + '">激音</button>';
+            html += '<button data-threes-type="nong" class="' + (ttype==='nong'?'active':'') + '">濃音</button>';
+            html += '<button data-threes-type="pyeong" class="' + (ttype==='pyeong'?'active':'') + '">平音</button>';
+            html += '</div>';
+            html += '<div class="info-box" style="background:var(--primary-lighter);border-left-color:var(--primary);"><strong>🎯 ' + tLabel + ':</strong> 5語ずつ練習しましょう。カードで🔊を再生。🎙️で発音を評価します。</div>';
+            html += '<div class="drill-grid">';
+            tWords.forEach(function(item) {
+                var safeW = escapeHtml(item.w);
+                var safeM = escapeHtml(item.m);
+                html += '<div class="drill-card-wrap">';
+                html += '<div class="drill-card tts-play" data-text="' + safeW + '">';
+                html += '<div class="word">' + item.w + '</div>';
+                html += '<div class="meaning">' + safeM + '</div>';
+                html += '</div>';
+                html += '<button class="drill-card-mic open-practice" data-text="' + safeW + '" data-label="' + safeM + '" aria-label="発音練習">🎙️</button>';
+                html += '</div>';
+            });
+            html += '</div>';
+            html += '<div class="drill-actions">';
+            html += '<button id="threesPrevGroup">◀ 前のグループ</button>';
+            html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--primary-dark);">グループ ' + (tgIdx + 1) + ' / ' + tgroups + '</div>';
+            html += '<button id="threesNextGroup" class="primary">次のグループ ▶</button>';
+            html += '</div>';
         } else {
             // 組立ゲーム
             var gmode = APP_STATE.gameMode;
@@ -2825,6 +2903,26 @@
         }
         if (e.target.id === 'drillReshuffle') {
             reshuffleDrill();
+            renderPractice();
+            return;
+        }
+        // 激音・濃音 サブタブのモード切替
+        var threesTypeBtn = e.target.closest('[data-threes-type]');
+        if (threesTypeBtn) {
+            APP_STATE.threesType = threesTypeBtn.dataset.threesType;
+            saveState();
+            renderPractice();
+            return;
+        }
+        if (e.target.id === 'threesPrevGroup' || e.target.id === 'threesNextGroup') {
+            var ttype2 = APP_STATE.threesType || 'gyeok';
+            var tarr2 = (ttype2 === 'gyeok') ? PRACTICE_GYEOK : (ttype2 === 'nong') ? PRACTICE_NONG : PRACTICE_PYEONG;
+            var tg2 = Math.ceil(tarr2.length / 5);
+            var key2 = (ttype2 === 'gyeok') ? 'threesGyeokGroup' : (ttype2 === 'nong') ? 'threesNongGroup' : 'threesPyeongGroup';
+            var cur2 = APP_STATE[key2] || 0;
+            var d = (e.target.id === 'threesNextGroup') ? 1 : -1;
+            APP_STATE[key2] = (cur2 + d + tg2) % tg2;
+            saveState();
             renderPractice();
             return;
         }
